@@ -80,7 +80,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var libraryCount: TextView
     
     private val commandRunner = CommandRunner()
-    private val catalogClient = LibraryCatalogClient(SERVER_LIST_URL)
     private val licenseValidator by lazy { PanelLicenseValidator(contentResolver) }
     private val assetExtractor by lazy { AssetExtractor(assets, cacheDir) }
     private var isReadyToInject: Boolean = false
@@ -264,9 +263,55 @@ class MainActivity : AppCompatActivity() {
         licenseKeyInput.setText(getLicenseKeyForLibrary(selectedLibrary.name).orEmpty())
     }
     
+    private fun panelBaseUrl(): String {
+        val saved = getSharedPreferences("kryvex_panel", Context.MODE_PRIVATE)
+            .getString("base_url", "").orEmpty().trim()
+        return if (saved.isNotEmpty()) saved.trimEnd('/') else SERVER_LIST_URL.removeSuffix("/Loader/index.php")
+    }
+
+    private fun catalogEndpoint(): String = panelBaseUrl() + "/Loader/index.php"
+
+    private fun panelConnectEndpoint(): String = panelBaseUrl() + "/connect"
+
+    private fun showPanelSettings() {
+        val field = EditText(this).apply {
+            setSingleLine(true)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+            setText(panelBaseUrl())
+            setSelectAllOnFocus(true)
+            setPadding(24, 24, 24, 24)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Panel settings")
+            .setMessage("Enter the HTTPS address of your KRYVEX license panel.")
+            .setView(field)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Save") { _, _ ->
+                val value = field.text.toString().trim().trimEnd('/')
+                val uri = Uri.parse(value)
+                if (uri.scheme?.lowercase() != "https" || uri.host.isNullOrBlank() ||
+                    !uri.path.isNullOrBlank() && uri.path != "/") {
+                    showToast("Enter an HTTPS panel website address")
+                } else {
+                    getSharedPreferences("kryvex_panel", Context.MODE_PRIVATE)
+                        .edit().putString("base_url", value).apply()
+                    allLibraries.clear()
+                    filteredLibraries.clear()
+                    selectedLibrary = SelectedLibrary()
+                    isReadyToInject = false
+                    loginButton.text = "Log in"
+                    loginButton.isEnabled = true
+                    licenseKeyInputLayout.visibility = View.VISIBLE
+                    refreshLibraryDrawer()
+                    loadLibraryCatalog()
+                    showToast("Panel address saved")
+                }
+            }.show()
+    }
+
     private fun loadLibraryCatalog() {
         lifecycleScope.launch {
-            val root = catalogClient.load().getOrElse { _ ->
+            val root = LibraryCatalogClient(catalogEndpoint()).load().getOrElse { _ ->
                 Toast.makeText(this@MainActivity, "Failed to load servers data", Toast.LENGTH_SHORT).show()
                 return@launch
             }
@@ -332,6 +377,11 @@ class MainActivity : AppCompatActivity() {
             }
             override fun afterTextChanged(editable: Editable?) = Unit
         })
+
+        findViewById<View>(R.id.drawer_panel_settings).setOnClickListener {
+            setLibraryDrawerOpen(false)
+            showPanelSettings()
+        }
 
         findViewById<View>(R.id.drawer_about).setOnClickListener {
             setLibraryDrawerOpen(false)
@@ -654,7 +704,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun validateLicense(licenseKey: String) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val validationEndpoint = selectedLibrary.connectUrl.ifBlank { PANEL_URL }
+            val validationEndpoint = selectedLibrary.connectUrl.ifBlank { panelConnectEndpoint() }
             val validationGame = selectedLibrary.type.ifBlank { DEFAULT_GAME_TYPE }
             val validationResult = licenseValidator.validate(licenseKey, validationEndpoint, validationGame)
             withContext(Dispatchers.Main) {    
