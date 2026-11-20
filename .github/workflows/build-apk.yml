@@ -26,6 +26,15 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Check dependency repositories
+        run: |
+          for url in \
+            'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.0.20/kotlin-reflect-2.0.20.pom' \
+            'https://plugins.gradle.org/m2/org/jetbrains/kotlin/kotlin-reflect/2.0.20/kotlin-reflect-2.0.20.pom' \
+            'https://maven.aliyun.com/repository/public/org/jetbrains/kotlin/kotlin-reflect/2.0.20/kotlin-reflect-2.0.20.pom'; do
+            printf '%s ' "$url"
+            curl -L -sS --max-time 20 -o /dev/null -w '%{http_code}\n' "$url" || true
+          done
       - name: Build APK
         run: |
           chmod +x ./gradlew
