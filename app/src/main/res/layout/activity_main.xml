@@ -383,6 +383,32 @@
                 android:background="@color/loader_border" />
 
             <LinearLayout
+                android:id="@+id/drawer_panel_settings"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:contentDescription="Panel settings"
+                    android:src="@drawable/ic_secure" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:text="Panel settings"
+                    android:textColor="@color/loader_text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/drawer_about"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
