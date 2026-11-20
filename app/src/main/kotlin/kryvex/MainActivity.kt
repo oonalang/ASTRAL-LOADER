@@ -70,6 +70,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var loaderPreferences: LoaderPreferences
     private lateinit var progressBar: ProgressBar
     private lateinit var loginSpinner: ProgressBar
+    private lateinit var downloadErrorView: TextView
     private var loginLoading = false
     private lateinit var radioGroup: RadioGroup
     private lateinit var radioAuto: RadioButton
@@ -137,6 +138,7 @@ class MainActivity : AppCompatActivity() {
         licenseKeyInputLayout = findViewById(R.id.input_layout)
         loginButton = findViewById(R.id.login_button)
         loginSpinner = findViewById(R.id.login_spinner)
+        downloadErrorView = findViewById(R.id.download_error)
         licenseKeyInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(text: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) {
@@ -203,6 +205,11 @@ class MainActivity : AppCompatActivity() {
 
         loginButton.setOnClickListener {
             if (loginLoading) return@setOnClickListener
+            if (!isReadyToInject && authenticatedGame.isNotBlank() && selectedLibrary.name.isNotBlank()) {
+                startLoginLoading()
+                proceedWithDownload()
+                return@setOnClickListener
+            }
             if (!isReadyToInject) {
                 licenseKeyInputLayout.error = null
                 startLoginLoading()
@@ -684,6 +691,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startLoginLoading() {
+        downloadErrorView.visibility = View.GONE
+        downloadErrorView.text = ""
         loginLoading = true
         loginButton.text = ""
         loginButton.isEnabled = false
@@ -696,6 +705,16 @@ class MainActivity : AppCompatActivity() {
         if (loginButton.text.isBlank()) {
             loginButton.text = if (isReadyToInject) "INJECT" else "LOGIN"
         }
+    }
+
+    private fun showDownloadFailure(reason: String) {
+        stopLoginLoading()
+        progressBar.visibility = View.GONE
+        downloadErrorView.text = reason
+        downloadErrorView.visibility = View.VISIBLE
+        loginButton.text = "RETRY DOWNLOAD"
+        loginButton.isEnabled = true
+        licenseKeyInputLayout.error = null
     }
 
     private fun showToast(message: String) {
@@ -715,6 +734,7 @@ class MainActivity : AppCompatActivity() {
         selectedLibrary = SelectedLibrary()
         loadLibraryCatalog()
         stopLoginLoading()
+        downloadErrorView.visibility = View.GONE
         licenseKeyInputLayout.error = message
         licenseKeyInputLayout.visibility = View.VISIBLE
         appBanner.isEnabled = true
@@ -730,17 +750,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun proceedWithDownload() {
         if (selectedLibrary.downloadUrl.isBlank()) {
-            resetLoginState("Library download URL unavailable")
+            showDownloadFailure("Library download address unavailable")
             return
         }
 
         val detectedVpn = SplashActivity.getDetectedVPN()
         if (detectedVpn == null) {
-            downloadLibraryIfNeeded(this@MainActivity, selectedLibrary.downloadUrl, LIBRARY_FILE_NAME) { success ->
+            downloadLibraryIfNeeded(this@MainActivity, selectedLibrary.downloadUrl, LIBRARY_FILE_NAME) { success, reason ->
                 if (success) {
                     assetExtractor.extractAll()
                     if (!isLibraryReady()) {
-                        resetLoginState("FAILED TO LOAD RUNTIME LIBRARY")
+                        showDownloadFailure("Library file was not saved correctly")
                         isReadyToInject = false
                     } else {
                         lifecycleScope.launch(Dispatchers.Main) {
@@ -755,7 +775,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 } else {
-                    resetLoginState("FAILED TO DOWNLOAD, \nRETRY AGAIN.")
+                    showDownloadFailure(reason.ifBlank { "Unable to download library" })
                     isReadyToInject = false
                 }
             }
@@ -840,7 +860,7 @@ class MainActivity : AppCompatActivity() {
         context: Context,
         url: String,
         libraryFileName: String,
-        callback: (Boolean) -> Unit
+        callback: (Boolean, String) -> Unit
     ) {
         val libraryDownloader = LibraryDownloader(context)
         val outputFile = File(context.cacheDir, libraryFileName)
@@ -849,24 +869,21 @@ class MainActivity : AppCompatActivity() {
                 progressBar.visibility = View.VISIBLE
                 progressBar.progress = 0
             }
-            val downloaded = libraryDownloader.download(url, libraryFileName) { progress ->
+
+            val result = libraryDownloader.downloadWithStatus(url, libraryFileName) { progress ->
                 progressBar.progress = progress
             }
-            val valid = if (downloaded && outputFile.isFile && outputFile.length() >= 64L) {
-                runCatching {
-                    val header = ByteArray(4)
-                    outputFile.inputStream().use { it.read(header) == 4 &&
-                        header.contentEquals(byteArrayOf(0x7F, 0x45, 0x4C, 0x46)) }
-                }.getOrDefault(false)
-            } else false
+            val valid = result.success && outputFile.isFile && outputFile.length() >= 64L
+
             if (valid) {
                 remoteLibrarySize = outputFile.length().toInt()
             } else {
                 outputFile.delete()
             }
+
             withContext(Dispatchers.Main) {
                 progressBar.visibility = View.GONE
-                callback(valid)
+                callback(valid, if (valid) "" else result.reason.ifBlank { "Library file failed validation" })
             }
         }
     }
