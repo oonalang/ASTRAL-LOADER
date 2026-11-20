@@ -94,6 +94,7 @@ class MainActivity : AppCompatActivity() {
     private val licenseValidator by lazy { PanelLicenseValidator(contentResolver) }
     private val assetExtractor by lazy { AssetExtractor(assets, cacheDir) }
     private var isReadyToInject: Boolean = false
+    private var downloadingLibrary = false
     private var authenticatedGame: String = ""
     private var authenticatedKey: String = ""
     private var remoteLibrarySize: Int = 0
@@ -139,6 +140,7 @@ class MainActivity : AppCompatActivity() {
         loginButton = findViewById(R.id.login_button)
         loginSpinner = findViewById(R.id.login_spinner)
         downloadErrorView = findViewById(R.id.download_error)
+        updateLibraryNavigation(false)
         licenseKeyInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(text: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) {
@@ -204,47 +206,53 @@ class MainActivity : AppCompatActivity() {
         }
 
         loginButton.setOnClickListener {
-            if (loginLoading) return@setOnClickListener
-            if (!isReadyToInject && authenticatedGame.isNotBlank() && selectedLibrary.name.isNotBlank()) {
-                startLoginLoading()
-                proceedWithDownload()
+            if (loginLoading || downloadingLibrary) return@setOnClickListener
+
+            if (authenticatedGame.isNotBlank()) {
+                if (selectedLibrary.name.isBlank() ||
+                    !selectedLibrary.type.equals(authenticatedGame, ignoreCase = true)) {
+                    setLibraryDrawerOpen(true)
+                    return@setOnClickListener
+                }
+
+                if (isReadyToInject) {
+                    loginButton.isEnabled = false
+                    radioGroup.isEnabled = false
+                    delaySpinner.isEnabled = false
+                    methodSpinner.isEnabled = false
+                    injectLibrary(LIBRARY_FILE_NAME)
+                } else {
+                    proceedWithDownload()
+                }
                 return@setOnClickListener
             }
-            if (!isReadyToInject) {
-                licenseKeyInputLayout.error = null
-                startLoginLoading()
-                licenseKeyInput.isEnabled = false
-                librarySpinner.isEnabled = false
-                delaySpinner.isEnabled = false
-                methodSpinner.isEnabled = false
-                radioGroup.isEnabled = false
-                val licenseKey = licenseKeyInput.text?.toString()?.trim()
-                if (licenseKey.isNullOrEmpty()) {
-                    resetLoginState("License key cannot be empty")
-                } else {
-                    val detectedVpn = SplashActivity.getDetectedVPN()
-                    if (detectedVpn != null) {
-                        stopLoginLoading()
-                        SplashActivity.showDialog(
-                            this,
-                            "VPN DETECTED",
-                            "Detected VPN Interface:\n$detectedVpn\n\nPlease disable your VPN and try again."
-                        )
-                    } else {
-                        validateLicense(licenseKey)
-                    }
-                }
-            } else if (isReadyToInject) {
-                injectLibrary(LIBRARY_FILE_NAME)
-                showToast("Injecting, please wait...")
-                loginButton.isEnabled = false
-                radioGroup.isEnabled = false
-                delaySpinner.isEnabled = false
-                methodSpinner.isEnabled = false
+
+            licenseKeyInputLayout.error = null
+            val licenseKey = licenseKeyInput.text?.toString()?.trim()
+            if (licenseKey.isNullOrEmpty()) {
+                licenseKeyInputLayout.error = "License key cannot be empty"
+                return@setOnClickListener
             }
-        } 
-        
-        
+
+            val detectedVpn = SplashActivity.getDetectedVPN()
+            if (detectedVpn != null) {
+                SplashActivity.showDialog(
+                    this,
+                    "VPN DETECTED",
+                    "Detected VPN Interface:\n$detectedVpn\n\nPlease disable your VPN and try again."
+                )
+                return@setOnClickListener
+            }
+
+            startLoginLoading()
+            licenseKeyInput.isEnabled = false
+            librarySpinner.isEnabled = false
+            delaySpinner.isEnabled = false
+            methodSpinner.isEnabled = false
+            radioGroup.isEnabled = false
+            validateLicense(licenseKey)
+        }
+
         loadLibraryCatalog()
         updateRootStatus()
     }
@@ -289,7 +297,7 @@ class MainActivity : AppCompatActivity() {
             setLibraryDrawerOpen(!isDrawerOpen)
         }
         findViewById<View>(R.id.browse_button).setOnClickListener {
-            setLibraryDrawerOpen(true)
+            if (authenticatedGame.isNotBlank()) setLibraryDrawerOpen(true)
         }
         findViewById<View>(R.id.quick_about).setOnClickListener {
             AlertDialog.Builder(this)
@@ -322,7 +330,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setLibraryDrawerOpen(open: Boolean) {
-        if (isDrawerOpen == open) return
+        if (isDrawerOpen == open || (open && authenticatedGame.isBlank())) return
         isDrawerOpen = open
 
         if (open) {
@@ -465,6 +473,8 @@ class MainActivity : AppCompatActivity() {
             showToast("${library.optString("NAME", "Library")} is under maintenance")
             return
         }
+        if (authenticatedGame.isBlank() ||
+            !library.optString("TYPE").equals(authenticatedGame, ignoreCase = true)) return
         handleSelectedJsonData(library)
         val filteredPosition = filteredLibraries.indexOfFirst {
             it.optString("NAME") == library.optString("NAME")
@@ -474,11 +484,11 @@ class MainActivity : AppCompatActivity() {
         }
         saveSelectedLibrary(selectedLibrary.name)
         setLibraryDrawerOpen(false)
-        if (authenticatedGame.isNotBlank() && selectedLibrary.type == authenticatedGame) {
-            startLoginLoading()
-            licenseKeyInputLayout.visibility = View.GONE
-            proceedWithDownload()
-        }
+        licenseKeyInputLayout.visibility = View.GONE
+        downloadErrorView.visibility = View.GONE
+        isReadyToInject = false
+        loginButton.text = "INJECT"
+        loginButton.isEnabled = true
     }
 
     private fun filterLibraries(includeTestLibraries: Boolean) {
@@ -550,6 +560,7 @@ class MainActivity : AppCompatActivity() {
     fun handleSelectedJsonData(jsonObject: JSONObject) {
         val incoming = SelectedLibrary.fromJson(jsonObject)
         if (selectedLibrary.name.isNotEmpty() && selectedLibrary.name != incoming.name) {
+            if (downloadingLibrary) return
             isReadyToInject = false
             File(cacheDir, LIBRARY_FILE_NAME).delete()
             if (authenticatedGame.isBlank()) {
@@ -588,9 +599,9 @@ class MainActivity : AppCompatActivity() {
             isReadyToInject = false
             loginButton.text = "UNAVAILABLE"
             loginButton.isEnabled = false
-        } else {
+        } else if (!loginLoading && !downloadingLibrary) {
             loginButton.isEnabled = true
-            if (!isReadyToInject) loginButton.text = "LOGIN"
+            loginButton.text = if (authenticatedGame.isNotBlank()) "INJECT" else "LOGIN"
         }
         val logoUrl = jsonObject.optString("LOGO")
         if (logoUrl.isNotBlank()) {
@@ -670,24 +681,36 @@ class MainActivity : AppCompatActivity() {
                 catalogMessage = ""
                 refreshLibraryDrawer()
                 filterLibraries(false)
-                startLoginLoading()
+
+                if (selectedLibrary.name.isBlank() ||
+                    !selectedLibrary.type.equals(game, ignoreCase = true)) {
+                    handleSelectedJsonData(allowed.first())
+                }
+
                 startHeartbeatPolling()
                 startOnlineCountPolling()
                 licenseKeyInputLayout.visibility = View.GONE
+                licenseKeyInputLayout.error = null
                 appBanner.isEnabled = false
+                licenseKeyInput.isEnabled = true
+                librarySpinner.isEnabled = true
+                delaySpinner.isEnabled = true
+                methodSpinner.isEnabled = true
+                radioGroup.isEnabled = true
                 saveLicenseKeyForLibrary(selectedLibrary.name, licenseKey)
                 saveSelectedLibrary(selectedLibrary.name)
-
-                if (allowed.size == 1) {
-                    proceedWithDownload()
-                } else {
-                    stopLoginLoading()
-                    loginButton.text = "SELECT LIBRARY"
-                    loginButton.isEnabled = false
-                    setLibraryDrawerOpen(true)
-                }
+                stopLoginLoading()
+                updateLibraryNavigation(true)
+                loginButton.text = "INJECT"
+                loginButton.isEnabled = true
             }
         }
+    }
+
+    private fun updateLibraryNavigation(visible: Boolean) {
+        val state = if (visible) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.library_menu_button).visibility = state
+        findViewById<View>(R.id.browse_button).visibility = state
     }
 
     private fun startLoginLoading() {
@@ -712,8 +735,9 @@ class MainActivity : AppCompatActivity() {
         progressBar.visibility = View.GONE
         downloadErrorView.text = reason
         downloadErrorView.visibility = View.VISIBLE
-        loginButton.text = "RETRY DOWNLOAD"
+        loginButton.text = "INJECT"
         loginButton.isEnabled = true
+        downloadingLibrary = false
         licenseKeyInputLayout.error = null
     }
 
@@ -732,6 +756,8 @@ class MainActivity : AppCompatActivity() {
         allLibraries.clear()
         filteredLibraries.clear()
         selectedLibrary = SelectedLibrary()
+        updateLibraryNavigation(false)
+        if (isDrawerOpen) setLibraryDrawerOpen(false)
         loadLibraryCatalog()
         stopLoginLoading()
         downloadErrorView.visibility = View.GONE
@@ -749,36 +775,45 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun proceedWithDownload() {
+        if (authenticatedGame.isBlank() || selectedLibrary.name.isBlank() ||
+            !selectedLibrary.type.equals(authenticatedGame, ignoreCase = true)) return
         if (selectedLibrary.downloadUrl.isBlank()) {
             showDownloadFailure("Library download address unavailable")
             return
         }
 
-        val detectedVpn = SplashActivity.getDetectedVPN()
-        if (detectedVpn == null) {
-            downloadLibraryIfNeeded(this@MainActivity, selectedLibrary.downloadUrl, LIBRARY_FILE_NAME) { success, reason ->
-                if (success) {
-                    assetExtractor.extractAll()
-                    if (!isLibraryReady()) {
-                        showDownloadFailure("Library file was not saved correctly")
-                        isReadyToInject = false
-                    } else {
-                        lifecycleScope.launch(Dispatchers.Main) {
-                            delay(2500)
-                            isReadyToInject = true
-                            stopLoginLoading()
-                            loginButton.text = "INJECT"
-                            loginButton.isEnabled = true
-                            radioGroup.isEnabled = true
-                            delaySpinner.isEnabled = true
-                            methodSpinner.isEnabled = true
-                        }
-                    }
-                } else {
-                    showDownloadFailure(reason.ifBlank { "Unable to download library" })
-                    isReadyToInject = false
-                }
+        downloadingLibrary = true
+        downloadErrorView.visibility = View.GONE
+        loginButton.text = "DOWNLOADING..."
+        loginButton.isEnabled = false
+        findViewById<View>(R.id.browse_button).isEnabled = false
+        findViewById<View>(R.id.library_menu_button).isEnabled = false
+
+        val expectedLibrary = selectedLibrary.name
+        downloadLibraryIfNeeded(this@MainActivity, selectedLibrary.downloadUrl, LIBRARY_FILE_NAME) { success, reason ->
+            downloadingLibrary = false
+            findViewById<View>(R.id.browse_button).isEnabled = true
+            findViewById<View>(R.id.library_menu_button).isEnabled = true
+
+            if (expectedLibrary != selectedLibrary.name || authenticatedGame.isBlank()) return@downloadLibraryIfNeeded
+
+            if (!success) {
+                isReadyToInject = false
+                showDownloadFailure(reason.ifBlank { "Unable to download library" })
+                return@downloadLibraryIfNeeded
             }
+
+            assetExtractor.extractAll()
+            if (!isLibraryReady()) {
+                isReadyToInject = false
+                showDownloadFailure("Library file was not saved correctly")
+                return@downloadLibraryIfNeeded
+            }
+
+            isReadyToInject = true
+            loginButton.text = "INJECT"
+            loginButton.isEnabled = false
+            injectLibrary(LIBRARY_FILE_NAME)
         }
     }
 
