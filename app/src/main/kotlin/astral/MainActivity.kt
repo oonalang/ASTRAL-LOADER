@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     init {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
     }
 
     private lateinit var licenseKeyInput: TextInputEditText
@@ -311,21 +311,12 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.browse_button).setOnClickListener {
             setLibraryDrawerOpen(true)
         }
-        findViewById<View>(R.id.quick_libraries).setOnClickListener {
-            setLibraryDrawerOpen(true)
-        }
         findViewById<View>(R.id.quick_about).setOnClickListener {
-            AboutDialog(this).show()
-        }
-        findViewById<View>(R.id.nav_libraries).setOnClickListener {
-            setLibraryDrawerOpen(true)
-        }
-        findViewById<View>(R.id.nav_about).setOnClickListener {
-            AboutDialog(this).show()
-        }
-        findViewById<View>(R.id.nav_home).setOnClickListener {
-            setLibraryDrawerOpen(false)
-            mainScroll.scrollTo(0, 0)
+            AlertDialog.Builder(this)
+                .setTitle("Need help?")
+                .setMessage("Choose your library and enter its license key. If your key is unavailable or rejected, contact your library provider.")
+                .setPositiveButton("OK", null)
+                .show()
         }
         findViewById<View>(R.id.drawer_close).setOnClickListener {
             setLibraryDrawerOpen(false)
