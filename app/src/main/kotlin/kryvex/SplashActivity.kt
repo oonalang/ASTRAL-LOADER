@@ -75,6 +75,7 @@ class SplashActivity : AppCompatActivity() {
         }
 
         setContentView(R.layout.activity_splash)
+        findViewById<android.view.View>(R.id.splash_root).background = KryvexGradientDrawable()
 
         progressBar = findViewById(R.id.progressBarSplash)
         progressBar.progress = 0
