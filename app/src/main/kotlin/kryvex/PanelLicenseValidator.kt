@@ -8,8 +8,12 @@ import java.net.URL
 import java.net.URLEncoder
 
 class PanelLicenseValidator(private val contentResolver: ContentResolver) {
+    @Volatile var presenceToken: String? = null
+        private set
+
 
     fun validate(licenseKey: String, endpoint: String, game: String): String {
+        presenceToken = null
         val endpointUrl = endpoint.trim()
         if (endpointUrl.isBlank()) return "Panel endpoint unavailable"
 
@@ -39,7 +43,13 @@ class PanelLicenseValidator(private val contentResolver: ContentResolver) {
                     ?: return "No validation response (HTTP $responseCode)"
                 val result = runCatching { JSONObject(response.trim().removePrefix("\uFEFF")) }
                     .getOrElse { return "Invalid panel response (HTTP $responseCode)" }
-                if (result.optBoolean("status")) SUCCESS_TOKEN else result.optString("reason", "Invalid license key")
+                if (result.optBoolean("status")) {
+                    val token = result.optJSONObject("data")?.optString("presence_token").orEmpty()
+                    presenceToken = token.takeIf { it.matches(Regex("[a-fA-F0-9]{64}")) }
+                    SUCCESS_TOKEN
+                } else {
+                    result.optString("reason", "Invalid license key")
+                }
             } finally {
                 connection.disconnect()
             }
