@@ -69,6 +69,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var methodSpinner: Spinner
     private lateinit var loaderPreferences: LoaderPreferences
     private lateinit var progressBar: ProgressBar
+    private lateinit var loginSpinner: ProgressBar
+    private var loginLoading = false
     private lateinit var radioGroup: RadioGroup
     private lateinit var radioAuto: RadioButton
     private lateinit var radioManual: RadioButton
@@ -134,6 +136,14 @@ class MainActivity : AppCompatActivity() {
         licenseKeyInput = findViewById(R.id.input_key)
         licenseKeyInputLayout = findViewById(R.id.input_layout)
         loginButton = findViewById(R.id.login_button)
+        loginSpinner = findViewById(R.id.login_spinner)
+        licenseKeyInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(text: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) {
+                if (!loginLoading) licenseKeyInputLayout.error = null
+            }
+            override fun afterTextChanged(editable: Editable?) = Unit
+        })
         radioGroup = findViewById(R.id.radioGroup)
         radioAuto = findViewById(R.id.radio_auto)
         radioManual = findViewById(R.id.radio_manual)
@@ -192,11 +202,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         loginButton.setOnClickListener {
+            if (loginLoading) return@setOnClickListener
             if (!isReadyToInject) {
-                showToast("Please wait...")
-                loginButton.isEnabled = false
+                licenseKeyInputLayout.error = null
+                startLoginLoading()
                 licenseKeyInput.isEnabled = false
-                licenseKeyInput.error = null
                 librarySpinner.isEnabled = false
                 delaySpinner.isEnabled = false
                 methodSpinner.isEnabled = false
@@ -207,6 +217,7 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     val detectedVpn = SplashActivity.getDetectedVPN()
                     if (detectedVpn != null) {
+                        stopLoginLoading()
                         SplashActivity.showDialog(
                             this,
                             "VPN DETECTED",
@@ -457,8 +468,7 @@ class MainActivity : AppCompatActivity() {
         saveSelectedLibrary(selectedLibrary.name)
         setLibraryDrawerOpen(false)
         if (authenticatedGame.isNotBlank() && selectedLibrary.type == authenticatedGame) {
-            loginButton.isEnabled = false
-            loginButton.text = "INJECT"
+            startLoginLoading()
             licenseKeyInputLayout.visibility = View.GONE
             proceedWithDownload()
         }
@@ -653,23 +663,38 @@ class MainActivity : AppCompatActivity() {
                 catalogMessage = ""
                 refreshLibraryDrawer()
                 filterLibraries(false)
+                startLoginLoading()
                 startHeartbeatPolling()
                 startOnlineCountPolling()
                 licenseKeyInputLayout.visibility = View.GONE
                 appBanner.isEnabled = false
                 saveLicenseKeyForLibrary(selectedLibrary.name, licenseKey)
                 saveSelectedLibrary(selectedLibrary.name)
-                showToast("License verified: $game")
 
                 if (allowed.size == 1) {
-                    loginButton.text = "INJECT"
                     proceedWithDownload()
                 } else {
+                    stopLoginLoading()
                     loginButton.text = "SELECT LIBRARY"
                     loginButton.isEnabled = false
                     setLibraryDrawerOpen(true)
                 }
             }
+        }
+    }
+
+    private fun startLoginLoading() {
+        loginLoading = true
+        loginButton.text = ""
+        loginButton.isEnabled = false
+        loginSpinner.visibility = View.VISIBLE
+    }
+
+    private fun stopLoginLoading() {
+        loginLoading = false
+        loginSpinner.visibility = View.GONE
+        if (loginButton.text.isBlank()) {
+            loginButton.text = if (isReadyToInject) "INJECT" else "LOGIN"
         }
     }
 
@@ -689,7 +714,8 @@ class MainActivity : AppCompatActivity() {
         filteredLibraries.clear()
         selectedLibrary = SelectedLibrary()
         loadLibraryCatalog()
-        showToast(message)
+        stopLoginLoading()
+        licenseKeyInputLayout.error = message
         licenseKeyInputLayout.visibility = View.VISIBLE
         appBanner.isEnabled = true
         loginButton.text = "LOGIN"
@@ -712,7 +738,6 @@ class MainActivity : AppCompatActivity() {
         if (detectedVpn == null) {
             downloadLibraryIfNeeded(this@MainActivity, selectedLibrary.downloadUrl, LIBRARY_FILE_NAME) { success ->
                 if (success) {
-                    showToast("Download successful")
                     assetExtractor.extractAll()
                     if (!isLibraryReady()) {
                         resetLoginState("FAILED TO LOAD RUNTIME LIBRARY")
@@ -720,13 +745,13 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         lifecycleScope.launch(Dispatchers.Main) {
                             delay(2500)
+                            isReadyToInject = true
+                            stopLoginLoading()
                             loginButton.text = "INJECT"
-                            showToast("Ready to inject")
                             loginButton.isEnabled = true
                             radioGroup.isEnabled = true
                             delaySpinner.isEnabled = true
                             methodSpinner.isEnabled = true
-                            isReadyToInject = true
                         }
                     }
                 } else {
@@ -823,7 +848,6 @@ class MainActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 progressBar.visibility = View.VISIBLE
                 progressBar.progress = 0
-                showToast("Downloading library...")
             }
             val downloaded = libraryDownloader.download(url, libraryFileName) { progress ->
                 progressBar.progress = progress
