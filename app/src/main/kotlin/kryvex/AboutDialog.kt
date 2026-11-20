@@ -2,8 +2,10 @@ package kryvex.loader
 
 import android.app.Dialog
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.Window
@@ -19,8 +21,14 @@ class AboutDialog(context: Context) : Dialog(context) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_about)
 
+        findViewById<View>(R.id.about_root).background = KryvexGradientDrawable()
         findViewById<View>(R.id.about_back).setOnClickListener { dismiss() }
         findViewById<View>(R.id.about_close_action).setOnClickListener { dismiss() }
+        findViewById<View>(R.id.about_channel_action).setOnClickListener {
+            runCatching {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/+eK6YlqQPkdQyZmQ1")))
+            }
+        }
         bindDetails()
     }
 
@@ -37,13 +45,18 @@ class AboutDialog(context: Context) : Dialog(context) {
                 WindowManager.LayoutParams.MATCH_PARENT
             )
         }
+        findViewById<View>(R.id.about_scroll).apply {
+            alpha = 0f
+            translationY = 18f * resources.displayMetrics.density
+            animate().alpha(1f).translationY(0f).setDuration(260L).start()
+        }
     }
 
     private fun bindDetails() {
         val details = listOf(
-            Detail(R.id.detail_developer, R.drawable.ic_user, "App", "KRYVEX LOADER"),
+            Detail(R.id.detail_developer, R.drawable.ic_user, "Owner", "@Kryvex_official09"),
             Detail(R.id.detail_username, R.drawable.ic_about, "Platform", "Android"),
-            Detail(R.id.detail_channel, R.drawable.ic_secure, "Access", "License required"),
+            Detail(R.id.detail_channel, R.drawable.ic_secure, "Developer", "@Revenant_Shai"),
             Detail(R.id.detail_version, R.drawable.ic_package, "Version", BuildConfig.VERSION_NAME)
         )
 
