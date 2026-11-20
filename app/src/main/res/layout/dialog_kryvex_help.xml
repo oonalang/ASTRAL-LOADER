@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/about_card"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ImageView
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/mark_bg"
+        android:clipToOutline="true"
+        android:src="@drawable/kryvex_art"
+        android:contentDescription="KRYVEX"
+        android:scaleType="centerCrop" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="Need help?"
+        android:textColor="@color/loader_text_primary"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Enter your license key to unlock libraries assigned to your game. Choose a library after verification, then select INJECT when ready."
+        android:textColor="@color/loader_text_secondary"
+        android:textSize="14sp"
+        android:lineSpacingExtra="4dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/help_telegram"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="24dp"
+        android:text="Open support channel"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        app:backgroundTint="@color/loader_accent"
+        app:cornerRadius="26dp"
+        app:icon="@drawable/ic_telegram"
+        app:iconTint="@android:color/white" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/help_close"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:text="Close"
+        android:textAllCaps="false"
+        android:textColor="@color/loader_text_primary"
+        android:textSize="14sp"
+        app:backgroundTint="@android:color/transparent"
+        app:cornerRadius="24dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="@color/loader_border_soft" />
+</LinearLayout>
