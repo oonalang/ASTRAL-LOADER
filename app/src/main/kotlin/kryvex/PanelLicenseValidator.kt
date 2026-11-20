@@ -10,10 +10,16 @@ import java.net.URLEncoder
 class PanelLicenseValidator(private val contentResolver: ContentResolver) {
     @Volatile var presenceToken: String? = null
         private set
+    @Volatile var licensedGame: String = ""
+        private set
+    @Volatile var libraryEntries: List<JSONObject> = emptyList()
+        private set
 
 
     fun validate(licenseKey: String, endpoint: String, game: String): String {
         presenceToken = null
+        licensedGame = ""
+        libraryEntries = emptyList()
         val endpointUrl = endpoint.trim()
         if (endpointUrl.isBlank()) return "Panel endpoint unavailable"
 
@@ -44,8 +50,14 @@ class PanelLicenseValidator(private val contentResolver: ContentResolver) {
                 val result = runCatching { JSONObject(response.trim().removePrefix("\uFEFF")) }
                     .getOrElse { return if (responseCode >= 500) "License server error (HTTP $responseCode). Check panel /connect." else "Invalid panel response (HTTP $responseCode)" }
                 if (result.optBoolean("status")) {
-                    val token = result.optJSONObject("data")?.optString("presence_token").orEmpty()
+                    val data = result.optJSONObject("data")
+                    val token = data?.optString("presence_token").orEmpty()
                     presenceToken = token.takeIf { it.matches(Regex("[a-fA-F0-9]{64}")) }
+                    licensedGame = data?.optString("game").orEmpty()
+                    val entries = data?.optJSONArray("libraries")
+                    libraryEntries = if (entries != null) {
+                        (0 until entries.length()).mapNotNull { entries.optJSONObject(it) }
+                    } else emptyList()
                     SUCCESS_TOKEN
                 } else {
                     result.optString("reason", "Invalid license key")
