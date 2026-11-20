@@ -905,9 +905,12 @@ class MainActivity : AppCompatActivity() {
                 progressBar.progress = 0
             }
 
-            val result = libraryDownloader.downloadWithStatus(url, libraryFileName) { progress ->
-                progressBar.progress = progress
-            }
+            val result = libraryDownloader.downloadWithStatus(
+                url = url,
+                destinationName = libraryFileName,
+                onProgress = { progress -> progressBar.progress = progress },
+                sessionToken = activePresenceToken.orEmpty()
+            )
             val valid = result.success && outputFile.isFile && outputFile.length() >= 64L
 
             if (valid) {
