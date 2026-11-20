@@ -91,6 +91,8 @@ class MainActivity : AppCompatActivity() {
     private val licenseValidator by lazy { PanelLicenseValidator(contentResolver) }
     private val assetExtractor by lazy { AssetExtractor(assets, cacheDir) }
     private var isReadyToInject: Boolean = false
+    private var authenticatedGame: String = ""
+    private var authenticatedKey: String = ""
     private var remoteLibrarySize: Int = 0
     private var selectedLibrary = SelectedLibrary()
     private var delaySeconds: Int = 0
@@ -190,12 +192,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         loginButton.setOnClickListener {
-            if (!isReadyToInject && (selectedLibrary.name.isBlank() || selectedLibrary.type.isBlank())) {
-                showToast("Select a library before logging in")
-                setLibraryDrawerOpen(true)
-                if (!catalogLoading && allLibraries.isEmpty()) loadLibraryCatalog()
-                return@setOnClickListener
-            }
             if (!isReadyToInject) {
                 showToast("Please wait...")
                 loginButton.isEnabled = false
@@ -230,23 +226,6 @@ class MainActivity : AppCompatActivity() {
             }
         } 
         
-        appBanner.setOnLongClickListener {
-            appBanner.alpha = 0.7f
-            Handler(Looper.getMainLooper()).postDelayed({
-                appBanner.alpha = 1.0f
-            }, 500)
-            
-            filterLibraries(!showTestLibraries)
-            
-            val message = if (showTestLibraries) {
-                "Test libraries shown"
-            } else {
-                "Test libraries hidden"
-            }
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-            
-            true
-        }
         
         loadLibraryCatalog()
         updateRootStatus()
@@ -275,63 +254,12 @@ class MainActivity : AppCompatActivity() {
 
         val selectedLibraryJson = filteredLibraries[position]
         handleSelectedJsonData(selectedLibraryJson)
-        licenseKeyInput.setText(getLicenseKeyForLibrary(selectedLibrary.name).orEmpty())
     }
     
     private fun loadLibraryCatalog() {
-        if (catalogLoading && onlineCountJob == null && allLibraries.isNotEmpty()) return
-        catalogLoading = true
-        catalogMessage = "Loading libraries..."
+        catalogLoading = false
+        catalogMessage = "Log in with your license key to view your libraries."
         refreshLibraryDrawer()
-        lifecycleScope.launch {
-            val primary = LibraryCatalogClient(SERVER_LIST_URL).load()
-            val result = if (primary.isSuccess) primary
-                else LibraryCatalogClient("https://tonntzyy.x10.mx/loader/catalog").load()
-            val root = result.getOrElse {
-                catalogLoading = false
-                catalogMessage = "Unable to load libraries. Tap here to retry."
-                refreshLibraryDrawer()
-                showToast("Library catalog unavailable")
-                return@launch
-            }
-
-            val meta = root.optJSONObject("META")
-            if (meta != null) {
-                val requiredCode = meta.optInt("APP_VERSION_CODE", -1)
-                val reason = meta.optString("VERSION_REASON", "Update required.")
-                val updateUrl = meta.optString("UPDATE_URL")
-
-                val currentCode = getAppVersionCode()
-                if (requiredCode != -1 && currentCode < requiredCode) {
-                    catalogLoading = false
-                    catalogMessage = "Loader update required"
-                    refreshLibraryDrawer()
-                    showVersionMismatchDialog(reason, updateUrl)
-                    return@launch
-                }
-            }
-
-            val entries = runCatching {
-                val dataArray = root.getJSONArray("DATA")
-                List(dataArray.length()) { dataArray.getJSONObject(it) }
-            }.getOrElse {
-                catalogLoading = false
-                catalogMessage = "Invalid catalog response. Tap here to retry."
-                refreshLibraryDrawer()
-                return@launch
-            }
-
-            allLibraries.clear()
-            allLibraries.addAll(entries)
-            catalogLoading = false
-            catalogMessage = if (entries.isEmpty()) {
-                "No published libraries. Tap here to refresh."
-            } else {
-                ""
-            }
-            refreshLibraryDrawer()
-            filterLibraries(false)
-        }
     }
 
     private fun setupLibraryDrawer() {
@@ -520,7 +448,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
         handleSelectedJsonData(library)
-        licenseKeyInput.setText(getLicenseKeyForLibrary(selectedLibrary.name).orEmpty())
         val filteredPosition = filteredLibraries.indexOfFirst {
             it.optString("NAME") == library.optString("NAME")
         }
@@ -529,25 +456,21 @@ class MainActivity : AppCompatActivity() {
         }
         saveSelectedLibrary(selectedLibrary.name)
         setLibraryDrawerOpen(false)
+        if (authenticatedGame.isNotBlank() && selectedLibrary.type == authenticatedGame) {
+            loginButton.isEnabled = false
+            loginButton.text = "INJECT"
+            licenseKeyInputLayout.visibility = View.GONE
+            proceedWithDownload()
+        }
     }
 
     private fun filterLibraries(includeTestLibraries: Boolean) {
         showTestLibraries = includeTestLibraries
         filteredLibraries.clear()
-        if (includeTestLibraries) {
-            filteredLibraries.addAll(allLibraries.filter { library ->
-                library.optString("NAME").contains("TEST", ignoreCase = true) &&
-                    LibraryMetadata.isActive(library)
-            })
-        } else {
-            filteredLibraries.addAll(allLibraries.filter { library ->
-                !library.optString("NAME").contains("TEST", ignoreCase = true) &&
-                    LibraryMetadata.isActive(library)
-            })
-        }
+        filteredLibraries.addAll(allLibraries.filter { LibraryMetadata.isActive(it) })
         updateSpinnerWithFilteredData()
     }
-    
+
     private fun updateSpinnerWithFilteredData() {
         val nameList = mutableListOf<String>()
         val logoList = mutableListOf<String>()
@@ -610,10 +533,13 @@ class MainActivity : AppCompatActivity() {
     fun handleSelectedJsonData(jsonObject: JSONObject) {
         val incoming = SelectedLibrary.fromJson(jsonObject)
         if (selectedLibrary.name.isNotEmpty() && selectedLibrary.name != incoming.name) {
-            endPresenceSession()
             isReadyToInject = false
-            licenseKeyInputLayout.visibility = View.VISIBLE
-            appBanner.isEnabled = true
+            File(cacheDir, LIBRARY_FILE_NAME).delete()
+            if (authenticatedGame.isBlank()) {
+                endPresenceSession()
+                licenseKeyInputLayout.visibility = View.VISIBLE
+                appBanner.isEnabled = true
+            }
         }
         selectedLibrary = incoming
         startOnlineCountPolling()
@@ -701,27 +627,47 @@ class MainActivity : AppCompatActivity() {
 
     private fun validateLicense(licenseKey: String) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val catalogEndpoint = selectedLibrary.connectUrl.trim()
-            val validationEndpoint = if (
-                catalogEndpoint.isBlank() ||
-                Uri.parse(catalogEndpoint).host.equals("tontzy.x10.mx", ignoreCase = true)
-            ) PANEL_URL else catalogEndpoint
-            val validationGame = selectedLibrary.type.ifBlank { DEFAULT_GAME_TYPE }
-            val validationResult = licenseValidator.validate(licenseKey, validationEndpoint, validationGame)
-            withContext(Dispatchers.Main) {    
-                if (licenseValidator.isSuccess(validationResult)) {
+            val response = licenseValidator.validate(licenseKey, PANEL_URL, "")
+            withContext(Dispatchers.Main) {
+                if (!licenseValidator.isSuccess(response)) {
+                    resetLoginState(response)
+                    return@withContext
+                }
+
+                val game = licenseValidator.licensedGame.uppercase()
+                val allowed = licenseValidator.libraryEntries.filter {
+                    it.optString("TYPE").uppercase() == game && LibraryMetadata.isActive(it)
+                }
+                if (game.isBlank() || allowed.isEmpty()) {
                     activePresenceToken = licenseValidator.presenceToken
-                    startHeartbeatPolling()
-                    startOnlineCountPolling()
-                    saveLicenseKeyForLibrary(selectedLibrary.name, licenseKey)
-                    saveSelectedLibrary(selectedLibrary.name)
-                    showToast("Login successful")
+                    resetLoginState("No published libraries for ${game.ifBlank { "this key" }}")
+                    return@withContext
+                }
+
+                authenticatedGame = game
+                authenticatedKey = licenseKey
+                activePresenceToken = licenseValidator.presenceToken
+                allLibraries.clear()
+                allLibraries.addAll(allowed)
+                catalogLoading = false
+                catalogMessage = ""
+                refreshLibraryDrawer()
+                filterLibraries(false)
+                startHeartbeatPolling()
+                startOnlineCountPolling()
+                licenseKeyInputLayout.visibility = View.GONE
+                appBanner.isEnabled = false
+                saveLicenseKeyForLibrary(selectedLibrary.name, licenseKey)
+                saveSelectedLibrary(selectedLibrary.name)
+                showToast("License verified: $game")
+
+                if (allowed.size == 1) {
                     loginButton.text = "INJECT"
-                    licenseKeyInputLayout.visibility = View.GONE
-                    appBanner.isEnabled = false
                     proceedWithDownload()
                 } else {
-                    resetLoginState(validationResult)
+                    loginButton.text = "SELECT LIBRARY"
+                    loginButton.isEnabled = false
+                    setLibraryDrawerOpen(true)
                 }
             }
         }
@@ -737,6 +683,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun resetLoginState(message: String) {
         endPresenceSession()
+        authenticatedGame = ""
+        authenticatedKey = ""
+        allLibraries.clear()
+        filteredLibraries.clear()
+        selectedLibrary = SelectedLibrary()
+        loadLibraryCatalog()
         showToast(message)
         licenseKeyInputLayout.visibility = View.VISIBLE
         appBanner.isEnabled = true
