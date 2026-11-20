@@ -69,7 +69,7 @@
                     android:clipToOutline="true"
                     android:contentDescription="Selected library logo"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/kryvex_logo" />
+                    android:src="@drawable/kryvex_art" />
 
                 <TextView
                     android:id="@+id/library_name"
@@ -241,7 +241,7 @@
                     android:layout_width="21dp"
                     android:layout_height="21dp"
                     android:contentDescription="KRYVEX"
-                    android:src="@drawable/kryvex_logo" />
+                    android:src="@drawable/kryvex_art" />
 
                 <TextView
                     android:id="@+id/powered_by"
@@ -301,7 +301,7 @@
                     android:layout_width="42dp"
                     android:layout_height="42dp"
                     android:contentDescription="KRYVEX libraries"
-                    android:src="@drawable/kryvex_logo" />
+                    android:src="@drawable/kryvex_art" />
 
                 <LinearLayout
                     android:layout_width="0dp"
