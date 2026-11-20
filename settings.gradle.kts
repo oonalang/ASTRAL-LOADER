@@ -14,6 +14,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Astral Loader"
+rootProject.name = "KRYVEX LOADER"
 
 include(":app")
