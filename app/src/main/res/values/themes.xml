@@ -1,17 +1,17 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:navigationBarColor">@color/loader_surface</item>
-        <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:windowBackground">@color/loader_background</item>
+<resources>
+    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:navigationBarColor">#0D1620</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowBackground">@drawable/kryvex_gradient</item>
         <item name="android:textColor">@color/loader_text_primary</item>
-        <item name="android:statusBarColor">@color/loader_surface</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">#252B32</item>
+        <item name="android:windowLightStatusBar">false</item>
         <item name="colorPrimary">@color/loader_accent</item>
-        <item name="colorSecondary">@color/loader_accent</item>
+        <item name="colorSecondary">@color/loader_accent_light</item>
     </style>
     <style name="CustomHintTextAppearance" parent="TextAppearance.AppCompat.Small">
-        <item name="android:textSize">12sp</item>
-        <item name="android:textColor">@color/loader_text_muted</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/loader_text_secondary</item>
     </style>
     <style name="DarkAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="android:background">@color/loader_surface</item>
