@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     init {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
     }
 
     private lateinit var licenseKeyInput: TextInputEditText
@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         appBanner = findViewById(R.id.app_banner)
         
         Glide.with(this)
-            .load(R.drawable.astral_logo)
+            .load(R.drawable.kryvex_logo)
             .centerCrop()
             .into(appBanner)
         
@@ -308,6 +308,25 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.library_menu_button).setOnClickListener {
             setLibraryDrawerOpen(!isDrawerOpen)
         }
+        findViewById<View>(R.id.browse_button).setOnClickListener {
+            setLibraryDrawerOpen(true)
+        }
+        findViewById<View>(R.id.quick_libraries).setOnClickListener {
+            setLibraryDrawerOpen(true)
+        }
+        findViewById<View>(R.id.quick_about).setOnClickListener {
+            AboutDialog(this).show()
+        }
+        findViewById<View>(R.id.nav_libraries).setOnClickListener {
+            setLibraryDrawerOpen(true)
+        }
+        findViewById<View>(R.id.nav_about).setOnClickListener {
+            AboutDialog(this).show()
+        }
+        findViewById<View>(R.id.nav_home).setOnClickListener {
+            setLibraryDrawerOpen(false)
+            mainScroll.scrollTo(0, 0)
+        }
         findViewById<View>(R.id.drawer_close).setOnClickListener {
             setLibraryDrawerOpen(false)
         }
@@ -449,8 +468,8 @@ class MainActivity : AppCompatActivity() {
 
             Glide.with(this)
                 .load(library.optString("LOGO"))
-                .placeholder(R.drawable.astral_logo)
-                .error(R.drawable.astral_logo)
+                .placeholder(R.drawable.kryvex_logo)
+                .error(R.drawable.kryvex_logo)
                 .centerCrop()
                 .into(row.findViewById(R.id.drawer_logo))
 
