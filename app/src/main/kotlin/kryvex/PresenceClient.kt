@@ -7,6 +7,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 
+data class PresenceHeartbeat(val active: Boolean?, val reason: String?)
+
 class PresenceClient(private val panelBaseUrl: String) {
     suspend fun onlineCount(game: String): Int? = withContext(Dispatchers.IO) {
         runCatching {
@@ -31,7 +33,37 @@ class PresenceClient(private val panelBaseUrl: String) {
         }.getOrNull()
     }
 
-    suspend fun heartbeat(sessionToken: String): Boolean? = postStatus("heartbeat", sessionToken)
+    suspend fun heartbeat(sessionToken: String): Boolean? = heartbeatDetails(sessionToken).active
+
+    suspend fun heartbeatDetails(sessionToken: String): PresenceHeartbeat = withContext(Dispatchers.IO) {
+        runCatching {
+            val connection = (URL("${panelBaseUrl.trimEnd('/')}/api/presence/heartbeat")
+                .openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                doOutput = true
+                connectTimeout = TIMEOUT_MS
+                readTimeout = TIMEOUT_MS
+                useCaches = false
+                setRequestProperty("Accept", "application/json")
+                setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            }
+            try {
+                val form = "session_token=" + URLEncoder.encode(sessionToken, "UTF-8")
+                connection.outputStream.use { it.write(form.toByteArray(Charsets.UTF_8)) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+                val json = runCatching { JSONObject(body) }.getOrNull()
+                if (code == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                    PresenceHeartbeat(false, json?.optString("reason").orEmpty().ifBlank { "Session expired or unauthorized" })
+                } else if (code in 200..299) {
+                    PresenceHeartbeat(json?.optBoolean("status"), json?.optString("reason"))
+                } else PresenceHeartbeat(null, null)
+            } finally {
+                connection.disconnect()
+            }
+        }.getOrElse { PresenceHeartbeat(null, null) }
+    }
 
     suspend fun offline(sessionToken: String): Boolean? = postStatus("offline", sessionToken)
 
