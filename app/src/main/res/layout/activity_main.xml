@@ -90,7 +90,8 @@
                     android:ellipsize="end"
                     android:gravity="center"
                     android:maxLines="1"
-                    android:text="Your library access"
+                    android:text=""
+                    android:visibility="gone"
                     android:textColor="@color/loader_text_secondary"
                     android:textSize="13sp" />
 
@@ -114,7 +115,8 @@
                     android:paddingTop="6dp"
                     android:paddingEnd="12dp"
                     android:paddingBottom="6dp"
-                    android:text="Ready"
+                    android:text=""
+                    android:visibility="gone"
                     android:textColor="@color/loader_status_active"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -146,6 +148,9 @@
                     app:boxStrokeColor="@color/loader_border"
                     app:boxStrokeWidth="1dp"
                     app:boxStrokeWidthFocused="2dp"
+                    app:boxStrokeErrorColor="@color/loader_error"
+                    app:errorTextColor="@color/loader_error"
+                    app:errorIconDrawable="@null"
                     app:endIconMode="password_toggle"
                     app:hintTextColor="@color/loader_text_secondary">
 
@@ -165,20 +170,39 @@
                         android:textSize="16sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/login_button"
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
-                    android:layout_marginTop="14dp"
-                    android:letterSpacing="0.05"
-                    android:text="LOGIN"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="17sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@color/loader_accent"
-                    app:cornerRadius="30dp"
-                    app:strokeWidth="0dp" />
+                    android:layout_marginTop="14dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/login_button"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_margin="0dp"
+                        android:letterSpacing="0.05"
+                        android:text="LOGIN"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"
+                        android:textSize="17sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/loader_accent"
+                        app:cornerRadius="30dp"
+                        app:strokeWidth="0dp" />
+
+                    <ProgressBar
+                        android:id="@+id/login_spinner"
+                        style="?android:attr/progressBarStyle"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:indeterminate="true"
+                        android:indeterminateTint="@android:color/white"
+                        android:indeterminateTintMode="src_in"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:visibility="gone" />
+                </FrameLayout>
 
                 <TextView
                     android:id="@+id/quick_about"
