@@ -96,6 +96,8 @@ class MainActivity : AppCompatActivity() {
     private var delaySeconds: Int = 0
     private var injectionMethod: String = "1"
     private var showTestLibraries = false
+    private var catalogLoading = true
+    private var catalogMessage = "Loading libraries..."
     private val allLibraries = mutableListOf<JSONObject>()
     private val filteredLibraries = mutableListOf<JSONObject>()
     private var isDrawerOpen = false
@@ -188,6 +190,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         loginButton.setOnClickListener {
+            if (!isReadyToInject && (selectedLibrary.name.isBlank() || selectedLibrary.type.isBlank())) {
+                showToast("Select a library before logging in")
+                setLibraryDrawerOpen(true)
+                if (!catalogLoading && allLibraries.isEmpty()) loadLibraryCatalog()
+                return@setOnClickListener
+            }
             if (!isReadyToInject) {
                 showToast("Please wait...")
                 loginButton.isEnabled = false
@@ -271,9 +279,19 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun loadLibraryCatalog() {
+        if (catalogLoading && onlineCountJob == null && allLibraries.isNotEmpty()) return
+        catalogLoading = true
+        catalogMessage = "Loading libraries..."
+        refreshLibraryDrawer()
         lifecycleScope.launch {
-            val root = LibraryCatalogClient(SERVER_LIST_URL).load().getOrElse { _ ->
-                Toast.makeText(this@MainActivity, "Failed to load servers data", Toast.LENGTH_SHORT).show()
+            val primary = LibraryCatalogClient(SERVER_LIST_URL).load()
+            val result = if (primary.isSuccess) primary
+                else LibraryCatalogClient("https://tonntzyy.x10.mx/loader/catalog").load()
+            val root = result.getOrElse {
+                catalogLoading = false
+                catalogMessage = "Unable to load libraries. Tap here to retry."
+                refreshLibraryDrawer()
+                showToast("Library catalog unavailable")
                 return@launch
             }
 
@@ -285,27 +303,37 @@ class MainActivity : AppCompatActivity() {
 
                 val currentCode = getAppVersionCode()
                 if (requiredCode != -1 && currentCode < requiredCode) {
+                    catalogLoading = false
+                    catalogMessage = "Loader update required"
+                    refreshLibraryDrawer()
                     showVersionMismatchDialog(reason, updateUrl)
                     return@launch
                 }
             }
 
-            runCatching {
+            val entries = runCatching {
                 val dataArray = root.getJSONArray("DATA")
-                allLibraries.clear()
-                for (i in 0 until dataArray.length()) {
-                    allLibraries.add(dataArray.getJSONObject(i))
-                }
-            }.onFailure { _ ->
-                Toast.makeText(this@MainActivity, "Failed to load servers data", Toast.LENGTH_SHORT).show()
+                List(dataArray.length()) { dataArray.getJSONObject(it) }
+            }.getOrElse {
+                catalogLoading = false
+                catalogMessage = "Invalid catalog response. Tap here to retry."
+                refreshLibraryDrawer()
                 return@launch
             }
 
+            allLibraries.clear()
+            allLibraries.addAll(entries)
+            catalogLoading = false
+            catalogMessage = if (entries.isEmpty()) {
+                "No published libraries. Tap here to refresh."
+            } else {
+                ""
+            }
             refreshLibraryDrawer()
             filterLibraries(false)
         }
     }
-    
+
     private fun setupLibraryDrawer() {
         libraryDrawer.post {
             libraryDrawer.translationX = -libraryDrawer.width.toFloat()
@@ -406,18 +434,23 @@ class MainActivity : AppCompatActivity() {
         }
 
         libraryList.removeAllViews()
-        libraryCount.text = if (allLibraries.isEmpty()) {
-            "LOADING LIBRARIES..."
-        } else {
-            "${visibleLibraries.size} AVAILABLE LIBRARIES"
+        libraryCount.text = when {
+            catalogLoading -> "LOADING LIBRARIES..."
+            allLibraries.isEmpty() -> "NO LIBRARIES AVAILABLE"
+            else -> "${visibleLibraries.size} AVAILABLE LIBRARIES"
         }
 
         if (visibleLibraries.isEmpty()) {
             val emptyState = TextView(this).apply {
-                text = if (allLibraries.isEmpty()) "Loading libraries..." else "No matching library"
+                text = if (allLibraries.isEmpty()) catalogMessage else "No matching library"
                 setTextColor(ContextCompat.getColor(this@MainActivity, R.color.loader_text_muted))
-                textSize = 11f
+                textSize = 13f
                 setPadding(12, 18, 12, 18)
+                if (allLibraries.isEmpty() && !catalogLoading) {
+                    isClickable = true
+                    isFocusable = true
+                    setOnClickListener { loadLibraryCatalog() }
+                }
             }
             libraryList.addView(emptyState)
             return
