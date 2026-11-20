@@ -1,10 +1,10 @@
 <resources>
     <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="android:navigationBarColor">#0E2226</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:windowBackground">@drawable/kryvex_gradient</item>
         <item name="android:textColor">@color/loader_text_primary</item>
-        <item name="android:statusBarColor">@color/loader_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="colorPrimary">@color/loader_accent</item>
         <item name="colorSecondary">@color/loader_accent_light</item>
