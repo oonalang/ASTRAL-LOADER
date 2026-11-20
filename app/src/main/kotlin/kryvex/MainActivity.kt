@@ -37,6 +37,8 @@ import com.bumptech.glide.Glide
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -78,8 +80,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var librarySearch: EditText
     private lateinit var libraryList: LinearLayout
     private lateinit var libraryCount: TextView
+    private lateinit var onlineUsers: TextView
     
     private val commandRunner = CommandRunner()
+    private val presenceClient = PresenceClient("https://tontzy.x10.mx")
+    private var onlineCountJob: Job? = null
+    private var heartbeatJob: Job? = null
+    private var activePresenceToken: String? = null
+    private var screenVisible = false
     private val licenseValidator by lazy { PanelLicenseValidator(contentResolver) }
     private val assetExtractor by lazy { AssetExtractor(assets, cacheDir) }
     private var isReadyToInject: Boolean = false
@@ -95,6 +103,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(null)
         setContentView(R.layout.activity_main)
+        findViewById<View>(R.id.root_container).background = KryvexGradientDrawable()
+        onlineUsers = findViewById(R.id.online_users)
 
         mainScroll = findViewById(R.id.main_scroll)
         libraryDrawer = findViewById(R.id.library_drawer)
@@ -565,7 +575,15 @@ class MainActivity : AppCompatActivity() {
     }
     
     fun handleSelectedJsonData(jsonObject: JSONObject) {
-        selectedLibrary = SelectedLibrary.fromJson(jsonObject)
+        val incoming = SelectedLibrary.fromJson(jsonObject)
+        if (selectedLibrary.name.isNotEmpty() && selectedLibrary.name != incoming.name) {
+            endPresenceSession()
+            isReadyToInject = false
+            licenseKeyInputLayout.visibility = View.VISIBLE
+            appBanner.isEnabled = true
+        }
+        selectedLibrary = incoming
+        startOnlineCountPolling()
         val maintenance = !LibraryMetadata.isActive(jsonObject)
         findViewById<TextView>(R.id.library_name).text = selectedLibrary.name
         findViewById<TextView>(R.id.library_game).text = LibraryMetadata.gameLabel(jsonObject)
@@ -655,6 +673,9 @@ class MainActivity : AppCompatActivity() {
             val validationResult = licenseValidator.validate(licenseKey, validationEndpoint, validationGame)
             withContext(Dispatchers.Main) {    
                 if (licenseValidator.isSuccess(validationResult)) {
+                    activePresenceToken = licenseValidator.presenceToken
+                    startHeartbeatPolling()
+                    startOnlineCountPolling()
                     saveLicenseKeyForLibrary(selectedLibrary.name, licenseKey)
                     saveSelectedLibrary(selectedLibrary.name)
                     showToast("Login successful")
@@ -678,7 +699,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resetLoginState(message: String) {
+        endPresenceSession()
         showToast(message)
+        licenseKeyInputLayout.visibility = View.VISIBLE
+        appBanner.isEnabled = true
         loginButton.text = "LOGIN"
         loginButton.isEnabled = true
         licenseKeyInput.isEnabled = true
@@ -872,6 +896,67 @@ class MainActivity : AppCompatActivity() {
         LibraryDownloader.cancelNotification(this)
     }
     
+    private fun startOnlineCountPolling() {
+        onlineCountJob?.cancel()
+        if (!screenVisible) return
+        onlineCountJob = lifecycleScope.launch {
+            while (isActive) {
+                val game = selectedLibrary.type.ifBlank { DEFAULT_GAME_TYPE }
+                val count = presenceClient.onlineCount(game)
+                if (isActive) {
+                    onlineUsers.text = when (count) {
+                        null -> "● Online status unavailable"
+                        1 -> "● 1 user online"
+                        else -> "● $count users online"
+                    }
+                }
+                delay(25_000L)
+            }
+        }
+    }
+
+    private fun startHeartbeatPolling() {
+        heartbeatJob?.cancel()
+        if (!screenVisible) return
+        val token = activePresenceToken ?: return
+        heartbeatJob = lifecycleScope.launch {
+            while (isActive && activePresenceToken == token) {
+                val active = presenceClient.heartbeat(token)
+                if (active == false && activePresenceToken == token) {
+                    activePresenceToken = null
+                    resetLoginState("Session expired. Please log in again")
+                    startOnlineCountPolling()
+                    break
+                }
+                delay(30_000L)
+            }
+        }
+    }
+
+    private fun endPresenceSession() {
+        val token = activePresenceToken ?: return
+        activePresenceToken = null
+        heartbeatJob?.cancel()
+        lifecycleScope.launch {
+            presenceClient.offline(token)
+            startOnlineCountPolling()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        screenVisible = true
+        startOnlineCountPolling()
+        startHeartbeatPolling()
+    }
+
+    override fun onPause() {
+        screenVisible = false
+        onlineCountJob?.cancel()
+        heartbeatJob?.cancel()
+        super.onPause()
+    }
+
     override fun onStop() {
         super.onStop()
         if (isFinishing) {
