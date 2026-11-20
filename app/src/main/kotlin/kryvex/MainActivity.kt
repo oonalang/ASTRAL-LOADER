@@ -51,8 +51,8 @@ import com.google.android.material.button.MaterialButton
 class MainActivity : AppCompatActivity() {
 
     private companion object {
-        const val SERVER_LIST_URL = "https://tontzy.x10.mx/Loader/index.php"
-        const val PANEL_URL = "https://tontzy.x10.mx/connect"
+        const val SERVER_LIST_URL = "https://tonntzyy.x10.mx/Loader/index.php"
+        const val PANEL_URL = "https://tonntzyy.x10.mx/connect"
         const val DEFAULT_GAME_TYPE = "CODM"
         const val LIBRARY_FILE_NAME = "libexternal.so"
     }
@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var onlineUsers: TextView
     
     private val commandRunner = CommandRunner()
-    private val presenceClient = PresenceClient("https://tontzy.x10.mx")
+    private val presenceClient = PresenceClient("https://tonntzyy.x10.mx")
     private var onlineCountJob: Job? = null
     private var heartbeatJob: Job? = null
     private var activePresenceToken: String? = null
@@ -668,7 +668,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun validateLicense(licenseKey: String) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val validationEndpoint = selectedLibrary.connectUrl.ifBlank { PANEL_URL }
+            val catalogEndpoint = selectedLibrary.connectUrl.trim()
+            val validationEndpoint = if (
+                catalogEndpoint.isBlank() ||
+                Uri.parse(catalogEndpoint).host.equals("tontzy.x10.mx", ignoreCase = true)
+            ) PANEL_URL else catalogEndpoint
             val validationGame = selectedLibrary.type.ifBlank { DEFAULT_GAME_TYPE }
             val validationResult = licenseValidator.validate(licenseKey, validationEndpoint, validationGame)
             withContext(Dispatchers.Main) {    
