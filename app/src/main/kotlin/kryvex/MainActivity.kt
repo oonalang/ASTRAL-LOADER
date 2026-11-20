@@ -835,50 +835,33 @@ class MainActivity : AppCompatActivity() {
         val libraryDownloader = LibraryDownloader(context)
         val outputFile = File(context.cacheDir, libraryFileName)
         lifecycleScope.launch(Dispatchers.IO) {
-            var success = false
-            try {
-                val connection = URL(url).openConnection()
-                try {
-                    connection.connect()
-                    remoteLibrarySize = connection.contentLength
-                    if (remoteLibrarySize >= 9999) {
-                        val needToDownload = if (outputFile.exists()) {
-                            val localFileSize = outputFile.length().toInt()
-                            localFileSize != remoteLibrarySize
-                        } else {
-                            true
-                        }
-
-                        if (!needToDownload) {
-                            success = true
-                        } else {
-                            withContext(Dispatchers.Main) {
-                                showToast("Downloading updates...")
-                                progressBar.visibility = View.VISIBLE
-                                progressBar.progress = 0
-                            }
-                            success = libraryDownloader.download(url, libraryFileName) { progress ->
-                                runOnUiThread {
-                                    progressBar.progress = progress
-                                }
-                            }
-                        }
-                    }
-                } finally {
-                    (connection as? HttpURLConnection)?.disconnect()
-                }
-            } catch (_: Exception) {
-            }
-
             withContext(Dispatchers.Main) {
-                callback(success)
-                if (::progressBar.isInitialized) {
-                    progressBar.visibility = View.GONE
-                }
+                progressBar.visibility = View.VISIBLE
+                progressBar.progress = 0
+                showToast("Downloading library...")
+            }
+            val downloaded = libraryDownloader.download(url, libraryFileName) { progress ->
+                progressBar.progress = progress
+            }
+            val valid = if (downloaded && outputFile.isFile && outputFile.length() >= 64L) {
+                runCatching {
+                    val header = ByteArray(4)
+                    outputFile.inputStream().use { it.read(header) == 4 &&
+                        header.contentEquals(byteArrayOf(0x7F, 0x45, 0x4C, 0x46)) }
+                }.getOrDefault(false)
+            } else false
+            if (valid) {
+                remoteLibrarySize = outputFile.length().toInt()
+            } else {
+                outputFile.delete()
+            }
+            withContext(Dispatchers.Main) {
+                progressBar.visibility = View.GONE
+                callback(valid)
             }
         }
     }
-    
+
     private fun updateRootStatus() {
         lifecycleScope.launch(Dispatchers.IO) {
             val isRooted = commandRunner.hasRootAccess()
