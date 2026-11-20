@@ -127,7 +127,7 @@ class MainActivity : AppCompatActivity() {
         appBanner = findViewById(R.id.app_banner)
         
         Glide.with(this)
-            .load(R.drawable.kryvex_logo)
+            .load(R.drawable.kryvex_art)
             .centerCrop()
             .into(appBanner)
         
@@ -509,8 +509,8 @@ class MainActivity : AppCompatActivity() {
 
             Glide.with(this)
                 .load(library.optString("LOGO"))
-                .placeholder(R.drawable.kryvex_logo)
-                .error(R.drawable.kryvex_logo)
+                .placeholder(R.drawable.kryvex_art)
+                .error(R.drawable.kryvex_art)
                 .centerCrop()
                 .into(row.findViewById(R.id.drawer_logo))
 
