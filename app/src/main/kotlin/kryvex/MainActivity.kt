@@ -151,7 +151,13 @@ class MainActivity : AppCompatActivity() {
         licenseKeyInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(text: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) {
-                if (!loginLoading) licenseKeyInputLayout.error = null
+                if (!loginLoading) {
+                    licenseKeyInputLayout.error = null
+                    if (authenticatedGame.isBlank() && loginButton.text == "ACTIVATION REVOKED") {
+                        loginButton.text = "LOGIN"
+                        loginButton.isEnabled = true
+                    }
+                }
             }
             override fun afterTextChanged(editable: Editable?) = Unit
         })
@@ -863,8 +869,9 @@ class MainActivity : AppCompatActivity() {
         rememberKeyToggle.visibility = View.VISIBLE
         licenseKeyInputLayout.visibility = View.VISIBLE
         appBanner.isEnabled = true
-        loginButton.text = "LOGIN"
-        loginButton.isEnabled = true
+        val revoked = message.equals("Activation revoked", ignoreCase = true)
+        loginButton.text = if (revoked) "ACTIVATION REVOKED" else "LOGIN"
+        loginButton.isEnabled = !revoked
         licenseKeyInput.isEnabled = true
         librarySpinner.isEnabled = true
         delaySpinner.isEnabled = true
@@ -1080,10 +1087,10 @@ class MainActivity : AppCompatActivity() {
         val token = activePresenceToken ?: return
         heartbeatJob = lifecycleScope.launch {
             while (isActive && activePresenceToken == token) {
-                val active = presenceClient.heartbeat(token)
-                if (active == false && activePresenceToken == token) {
+                val heartbeat = presenceClient.heartbeatDetails(token)
+                if (heartbeat.active == false && activePresenceToken == token) {
                     activePresenceToken = null
-                    resetLoginState("Session expired. Please log in again")
+                    resetLoginState(if (heartbeat.reason.equals("Activation revoked", ignoreCase = true)) "Activation revoked" else "Session expired. Please log in again")
                     startOnlineCountPolling()
                     break
                 }
