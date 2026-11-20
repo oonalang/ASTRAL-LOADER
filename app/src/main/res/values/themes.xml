@@ -1,13 +1,16 @@
 <resources>
-    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:navigationBarColor">#0D1620</item>
+    <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:navigationBarColor">#0E2226</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:windowBackground">@drawable/kryvex_gradient</item>
         <item name="android:textColor">@color/loader_text_primary</item>
-        <item name="android:statusBarColor">#252B32</item>
+        <item name="android:statusBarColor">@color/loader_background</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="colorPrimary">@color/loader_accent</item>
         <item name="colorSecondary">@color/loader_accent_light</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSurface">@color/loader_surface</item>
+        <item name="android:colorBackground">@color/loader_background</item>
     </style>
     <style name="CustomHintTextAppearance" parent="TextAppearance.AppCompat.Small">
         <item name="android:textSize">13sp</item>
@@ -17,5 +20,7 @@
         <item name="android:background">@color/loader_surface</item>
         <item name="android:textColorPrimary">@color/loader_text_primary</item>
         <item name="android:textColorSecondary">@color/loader_text_secondary</item>
+        <item name="colorPrimary">@color/loader_accent</item>
+        <item name="colorSurface">@color/loader_surface</item>
     </style>
 </resources>

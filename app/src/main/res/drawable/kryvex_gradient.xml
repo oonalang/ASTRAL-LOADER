@@ -3,41 +3,41 @@
     <item>
         <shape android:shape="rectangle">
             <gradient
-                android:angle="135"
-                android:startColor="#272630"
-                android:centerColor="#232E38"
-                android:endColor="#203832"
+                android:angle="270"
+                android:startColor="#273F4B"
+                android:centerColor="#1B353D"
+                android:endColor="#123231"
                 android:type="linear" />
         </shape>
     </item>
     <item
-        android:width="440dp"
-        android:height="950dp"
-        android:gravity="top|start">
+        android:width="520dp"
+        android:height="520dp"
+        android:gravity="top|end">
         <shape android:shape="oval">
             <gradient
                 android:type="radial"
-                android:centerX="0.0"
-                android:centerY="0.35"
-                android:gradientRadius="500dp"
-                android:startColor="#283E273C"
-                android:centerColor="#102E2837"
-                android:endColor="#00242D37" />
+                android:centerX="0.8"
+                android:centerY="0.1"
+                android:gradientRadius="340dp"
+                android:startColor="#330866FF"
+                android:centerColor="#140866FF"
+                android:endColor="#000F2A31" />
         </shape>
     </item>
     <item
-        android:width="700dp"
-        android:height="820dp"
-        android:gravity="bottom|end">
+        android:width="620dp"
+        android:height="620dp"
+        android:gravity="bottom|start">
         <shape android:shape="oval">
             <gradient
                 android:type="radial"
-                android:centerX="1.0"
-                android:centerY="0.85"
-                android:gradientRadius="600dp"
-                android:startColor="#2427493D"
-                android:centerColor="#12243A35"
-                android:endColor="#00232F37" />
+                android:centerX="0.1"
+                android:centerY="0.9"
+                android:gradientRadius="360dp"
+                android:startColor="#221B6E5E"
+                android:centerColor="#0F1B6E5E"
+                android:endColor="#000F2A31" />
         </shape>
     </item>
 </layer-list>

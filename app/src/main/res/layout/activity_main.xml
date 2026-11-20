@@ -4,68 +4,55 @@
     android:id="@+id/root_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/kryvex_gradient">
+    android:background="@drawable/kryvex_gradient"
+    android:fitsSystemWindows="true">
 
-    <ScrollView
-        android:id="@+id/main_scroll"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/transparent"
-        android:fillViewport="true"
-        android:scrollbars="none">
+        android:orientation="vertical">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:paddingStart="18dp"
-            android:paddingTop="12dp"
-            android:paddingEnd="18dp"
-            android:paddingBottom="20dp">
+            android:layout_height="58dp">
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="58dp">
+            <ImageButton
+                android:id="@+id/library_menu_button"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_gravity="start|center_vertical"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/menu_button"
+                android:contentDescription="Browse libraries"
+                android:padding="11dp"
+                android:src="@drawable/ic_menu"
+                app:tint="@color/loader_text_primary" />
+        </FrameLayout>
 
-                <ImageButton
-                    android:id="@+id/library_menu_button"
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
-                    android:layout_gravity="start|center_vertical"
-                    android:background="@drawable/menu_button"
-                    android:contentDescription="Browse libraries"
-                    android:padding="12dp"
-                    android:src="@drawable/ic_menu"
-                    app:tint="@color/loader_text_primary" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:text="KRYVEX LOADER"
-                    android:textColor="@color/loader_text_secondary"
-                    android:textSize="14sp"
-                    android:letterSpacing="0.03" />
-            </FrameLayout>
-
-            <Space
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="0.95"
-                android:minHeight="44dp" />
+        <ScrollView
+            android:id="@+id/main_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:fillViewport="true"
+            android:scrollbars="none">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:gravity="center_horizontal"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingStart="22dp"
+                android:paddingEnd="22dp"
+                android:paddingBottom="16dp">
 
                 <ImageView
                     android:id="@+id/app_banner"
-                    android:layout_width="104dp"
-                    android:layout_height="104dp"
-                    android:background="@drawable/circle"
+                    android:layout_width="124dp"
+                    android:layout_height="124dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/mark_bg"
                     android:clipToOutline="true"
                     android:contentDescription="Selected library logo"
                     android:scaleType="centerCrop"
@@ -78,6 +65,7 @@
                     android:layout_marginTop="18dp"
                     android:ellipsize="end"
                     android:gravity="center"
+                    android:letterSpacing="0.02"
                     android:maxLines="1"
                     android:text="KRYVEX"
                     android:textColor="@color/loader_text_primary"
@@ -132,138 +120,140 @@
                     android:textColor="@color/loader_text_muted"
                     android:textSize="10sp"
                     android:visibility="gone" />
-            </LinearLayout>
 
-            <Space
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1.15"
-                android:minHeight="48dp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/input_layout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="License key"
-                app:boxBackgroundColor="@android:color/transparent"
-                app:boxCornerRadiusBottomEnd="17dp"
-                app:boxCornerRadiusBottomStart="17dp"
-                app:boxCornerRadiusTopEnd="17dp"
-                app:boxCornerRadiusTopStart="17dp"
-                app:boxStrokeColor="@color/loader_border"
-                app:boxStrokeWidth="1dp"
-                app:boxStrokeWidthFocused="2dp"
-                app:endIconMode="password_toggle"
-                app:hintTextColor="@color/loader_text_secondary">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/input_key"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/input_layout"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textPassword"
-                    android:minHeight="60dp"
-                    android:paddingStart="15dp"
-                    android:paddingTop="14dp"
-                    android:paddingEnd="15dp"
-                    android:paddingBottom="14dp"
-                    android:singleLine="true"
-                    android:textColor="@color/loader_text_primary"
-                    android:textColorHint="@color/loader_text_secondary"
-                    android:textSize="16sp" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_marginTop="38dp"
+                    android:hint="License key"
+                    app:boxBackgroundColor="#14FFFFFF"
+                    app:boxCornerRadiusBottomEnd="16dp"
+                    app:boxCornerRadiusBottomStart="16dp"
+                    app:boxCornerRadiusTopEnd="16dp"
+                    app:boxCornerRadiusTopStart="16dp"
+                    app:boxStrokeColor="@color/loader_border"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="2dp"
+                    app:endIconMode="password_toggle"
+                    app:hintTextColor="@color/loader_text_secondary">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/login_button"
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="14dp"
-                android:text="Log in"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/loader_accent"
-                app:cornerRadius="27dp"
-                app:strokeWidth="0dp" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_key"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword"
+                        android:minHeight="62dp"
+                        android:paddingStart="18dp"
+                        android:paddingTop="16dp"
+                        android:paddingEnd="18dp"
+                        android:paddingBottom="16dp"
+                        android:singleLine="true"
+                        android:textColor="@color/loader_text_primary"
+                        android:textColorHint="@color/loader_text_secondary"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-            <TextView
-                android:id="@+id/quick_about"
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:text="Need help?"
-                android:textColor="@color/loader_text_primary"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <ProgressBar
-                android:id="@+id/progressBar"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="5dp"
-                android:layout_marginTop="6dp"
-                android:indeterminate="false"
-                android:max="100"
-                android:progressTint="@color/loader_accent"
-                android:visibility="gone" />
-
-            <Space
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1.55"
-                android:minHeight="46dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/browse_button"
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:text="Browse libraries"
-                android:textAllCaps="false"
-                android:textColor="@color/loader_accent_light"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:backgroundTint="@android:color/transparent"
-                app:cornerRadius="27dp"
-                app:strokeColor="@color/loader_accent_light"
-                app:strokeWidth="1dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="42dp"
-                android:layout_marginTop="12dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="21dp"
-                    android:layout_height="21dp"
-                    android:contentDescription="KRYVEX"
-                    android:src="@drawable/kryvex_art" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/login_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="14dp"
+                    android:letterSpacing="0.05"
+                    android:text="LOGIN"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/loader_accent"
+                    app:cornerRadius="30dp"
+                    app:strokeWidth="0dp" />
 
                 <TextView
-                    android:id="@+id/powered_by"
+                    android:id="@+id/quick_about"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="Need Help?"
+                    android:textColor="@color/loader_text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="4dp"
+                    android:layout_marginTop="4dp"
+                    android:indeterminate="false"
+                    android:max="100"
+                    android:progressTint="@color/loader_accent"
+                    android:visibility="gone" />
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:minHeight="28dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/browse_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:letterSpacing="0.06"
+                    android:text="BROWSE LIBRARIES"
+                    android:textAllCaps="false"
+                    android:textColor="@color/loader_accent_light"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@android:color/transparent"
+                    app:cornerRadius="29dp"
+                    app:strokeColor="@color/loader_accent"
+                    app:strokeWidth="1dp" />
+
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="7dp"
-                    android:text="KRYVEX"
-                    android:textColor="@color/loader_text_secondary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                    android:layout_marginTop="18dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-            <Spinner android:id="@+id/my_spinner" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
-            <Spinner android:id="@+id/delay_spinner" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
-            <Spinner android:id="@+id/method_spinner" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
-            <RadioGroup android:id="@+id/radioGroup" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone">
-                <RadioButton android:id="@+id/radio_auto" android:layout_width="1dp" android:layout_height="1dp" />
-                <RadioButton android:id="@+id/radio_manual" android:layout_width="1dp" android:layout_height="1dp" />
-            </RadioGroup>
-            <TextView android:id="@+id/root_status" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
-        </LinearLayout>
-    </ScrollView>
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:background="@drawable/mark_bg"
+                        android:clipToOutline="true"
+                        android:contentDescription="KRYVEX"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/kryvex_art" />
+
+                    <TextView
+                        android:id="@+id/powered_by"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:letterSpacing="0.04"
+                        android:text="KRYVEX"
+                        android:textColor="@color/loader_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <Spinner android:id="@+id/my_spinner" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+                <Spinner android:id="@+id/delay_spinner" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+                <Spinner android:id="@+id/method_spinner" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+                <RadioGroup android:id="@+id/radioGroup" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone">
+                    <RadioButton android:id="@+id/radio_auto" android:layout_width="1dp" android:layout_height="1dp" />
+                    <RadioButton android:id="@+id/radio_manual" android:layout_width="1dp" android:layout_height="1dp" />
+                </RadioGroup>
+                <TextView android:id="@+id/root_status" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
 
     <View
         android:id="@+id/drawer_scrim"
@@ -300,7 +290,10 @@
                 <ImageView
                     android:layout_width="42dp"
                     android:layout_height="42dp"
+                    android:background="@drawable/mark_bg"
+                    android:clipToOutline="true"
                     android:contentDescription="KRYVEX libraries"
+                    android:scaleType="centerCrop"
                     android:src="@drawable/kryvex_art" />
 
                 <LinearLayout
@@ -380,7 +373,7 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="12dp"
-                android:background="@color/loader_border" />
+                android:background="@color/loader_border_soft" />
 
             <LinearLayout
                 android:id="@+id/drawer_about"

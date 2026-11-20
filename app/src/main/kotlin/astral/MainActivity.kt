@@ -126,10 +126,7 @@ class MainActivity : AppCompatActivity() {
         rootStatusView = findViewById(R.id.root_status)
         appBanner = findViewById(R.id.app_banner)
         
-        Glide.with(this)
-            .load(R.drawable.kryvex_art)
-            .centerCrop()
-            .into(appBanner)
+        appBanner.setImageResource(R.drawable.kryvex_art)
         
         loaderPreferences = LoaderPreferences(this)
 
