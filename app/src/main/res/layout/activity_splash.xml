@@ -2,76 +2,27 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/loader_background"
-    android:padding="24dp">
+    android:background="@drawable/kryvex_gradient">
 
-    <LinearLayout
+    <ProgressBar
+        android:id="@+id/progressBarSplash"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/loader_accent"
+        android:indeterminateTintMode="src_in" />
+
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:background="@drawable/splash_modal"
-        android:elevation="8dp"
-        android:gravity="center_horizontal"
-        android:orientation="vertical">
-
-        <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:background="@drawable/circle"
-            android:contentDescription="KRYVEX logo"
-            android:scaleType="centerCrop"
-            android:src="@drawable/kryvex_logo" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:letterSpacing="0.12"
-            android:text="KRYVEX"
-            android:textColor="@color/loader_accent"
-            android:textSize="26sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:letterSpacing="0.18"
-            android:text="LOADER"
-            android:textColor="@color/loader_text_secondary"
-            android:textSize="11sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Preparing your session"
-            android:textColor="@color/loader_text_primary"
-            android:textSize="14sp" />
-
-        <ProgressBar
-            android:id="@+id/progressBarSplash"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="6dp"
-            android:layout_marginTop="16dp"
-            android:indeterminate="false"
-            android:max="100"
-            android:progress="0"
-            android:progressBackgroundTint="@color/loader_border"
-            android:progressTint="@color/loader_accent"
-            android:saveEnabled="false" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:letterSpacing="0.14"
-            android:text="PLEASE WAIT"
-            android:textColor="@color/loader_text_muted"
-            android:textSize="9sp"
-            android:textStyle="bold" />
-
-    </LinearLayout>
-
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="32dp"
+        android:gravity="center"
+        android:letterSpacing="0.16"
+        android:text="KRYVEX LOADER"
+        android:textColor="@color/loader_text_muted"
+        android:textSize="11sp"
+        android:textStyle="bold" />
 </FrameLayout>
