@@ -7,6 +7,10 @@ class LoaderPreferences(context: Context) {
     private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
     val licenses = LicenseStore(preferences)
 
+    init {
+        preferences.edit().remove("license_keys_map").apply()
+    }
+
     fun getMode(): String = preferences.getString(KEY_MODE, MODE_AUTO) ?: MODE_AUTO
 
     fun saveMode(mode: String) {
