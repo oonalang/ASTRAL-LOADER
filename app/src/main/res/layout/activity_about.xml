@@ -61,7 +61,7 @@
                 android:background="@drawable/circle"
                 android:contentDescription="KRYVEX logo"
                 android:scaleType="centerCrop"
-                android:src="@drawable/kryvex_logo" />
+                android:src="@drawable/kryvex_art" />
 
             <TextView
                 android:layout_width="wrap_content"
