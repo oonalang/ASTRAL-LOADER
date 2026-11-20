@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/about_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/loader_background">
+    android:background="@drawable/kryvex_gradient">
 
     <ScrollView
         android:id="@+id/about_scroll"
@@ -100,10 +101,14 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/about_channel_action"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:background="@drawable/about_card"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Open KRYVEX Telegram channel"
                 android:gravity="center_vertical"
                 android:minHeight="88dp"
                 android:orientation="horizontal"
@@ -112,8 +117,8 @@
                 <ImageView
                     android:layout_width="26dp"
                     android:layout_height="26dp"
-                    android:contentDescription="About this app"
-                    android:src="@drawable/ic_about" />
+                    android:contentDescription="Telegram channel"
+                    android:src="@drawable/ic_telegram" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -125,7 +130,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="About KRYVEX"
+                        android:text="Join KRYVEX Channel"
                         android:textColor="@color/loader_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -134,7 +139,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
-                        android:text="Access your selected libraries from one place."
+                        android:text="Updates, support, and announcements on Telegram."
                         android:textColor="@color/loader_text_secondary"
                         android:textSize="10sp" />
                 </LinearLayout>
@@ -181,7 +186,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="10dp"
-        android:background="@color/loader_background"
+        android:background="@android:color/transparent"
         android:paddingStart="8dp"
         android:paddingTop="4dp"
         android:paddingEnd="8dp"
