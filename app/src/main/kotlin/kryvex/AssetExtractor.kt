@@ -1,4 +1,4 @@
-package astral.loader
+package kryvex.loader
 
 import android.content.res.AssetManager
 import java.io.File

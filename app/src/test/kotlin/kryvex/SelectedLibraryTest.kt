@@ -1,4 +1,4 @@
-package astral.loader
+package kryvex.loader
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -8,7 +8,7 @@ class SelectedLibraryTest {
     @Test
     fun storesCatalogContractFieldsInRuntimeConfiguration() {
         val selected = SelectedLibrary(
-            name = "Astral",
+            name = "KRYVEX",
             downloadUrl = "https://example.test/lib.so",
             connectUrl = "https://example.test/connect",
             architecture = "64bit",
@@ -17,7 +17,7 @@ class SelectedLibraryTest {
             type = "CODM"
         )
 
-        assertEquals("Astral", selected.name)
+        assertEquals("KRYVEX", selected.name)
         assertEquals("https://example.test/lib.so", selected.downloadUrl)
         assertEquals("https://example.test/connect", selected.connectUrl)
         assertEquals("64bit", selected.architecture)

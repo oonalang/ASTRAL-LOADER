@@ -1,4 +1,4 @@
-package astral.loader
+package kryvex.loader
 
 import java.io.File
 import org.junit.Assert.assertTrue
@@ -9,7 +9,7 @@ class InjectionCommandBuilderTest {
     @Test
     fun buildsAnInjectionCommandFromSelectedLibrary() {
         val library = SelectedLibrary(
-            name = "Astral",
+            name = "KRYVEX",
             architecture = "64bit",
             jniKey = "test-key",
             gamePackage = "com.example.game"

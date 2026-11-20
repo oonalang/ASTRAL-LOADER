@@ -1,4 +1,4 @@
-package astral.loader
+package kryvex.loader
 
 import java.io.File
 

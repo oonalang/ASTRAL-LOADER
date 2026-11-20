@@ -4,16 +4,16 @@ plugins {
 }
 
 android {
-    namespace = "astral.loader"
+    namespace = "kryvex.loader"
     compileSdk = 35
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
-        applicationId = "astral.loader"
+        applicationId = "kryvex.loader"
         minSdk = 28
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 10659
+        versionName = "1.6.59"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -38,7 +38,6 @@ android {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
-            versionNameSuffix = "-release"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -49,7 +48,6 @@ android {
             isDebuggable = false
             isMinifyEnabled = false
             isShrinkResources = false
-            versionNameSuffix = "-debug"
         }
     }
 

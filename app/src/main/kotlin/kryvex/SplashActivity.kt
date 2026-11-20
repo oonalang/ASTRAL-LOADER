@@ -1,4 +1,4 @@
-package astral.loader
+package kryvex.loader
 
 import android.content.Intent
 import android.os.Build

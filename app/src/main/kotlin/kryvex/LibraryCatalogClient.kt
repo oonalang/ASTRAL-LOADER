@@ -1,4 +1,4 @@
-package astral.loader
+package kryvex.loader
 
 import android.util.Base64
 import kotlinx.coroutines.Dispatchers

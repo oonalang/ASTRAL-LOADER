@@ -1,4 +1,4 @@
-package astral.loader
+package kryvex.loader
 
 import android.app.NotificationManager
 import android.content.Context

@@ -1,4 +1,4 @@
-package astral.loader
+package kryvex.loader
 
 import android.content.ContentResolver
 import android.provider.Settings
