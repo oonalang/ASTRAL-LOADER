@@ -42,7 +42,7 @@ class PanelLicenseValidator(private val contentResolver: ContentResolver) {
                 val response = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
                     ?: return "No validation response (HTTP $responseCode)"
                 val result = runCatching { JSONObject(response.trim().removePrefix("\uFEFF")) }
-                    .getOrElse { return "Invalid panel response (HTTP $responseCode)" }
+                    .getOrElse { return if (responseCode >= 500) "License server error (HTTP $responseCode). Check panel /connect." else "Invalid panel response (HTTP $responseCode)" }
                 if (result.optBoolean("status")) {
                     val token = result.optJSONObject("data")?.optString("presence_token").orEmpty()
                     presenceToken = token.takeIf { it.matches(Regex("[a-fA-F0-9]{64}")) }
