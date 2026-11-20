@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background_color_dark">#111014</color>
-    <color name="textColor">#FFFFFF</color>
-    <color name="mtrl_textinput_default_box_stroke_color">#6E6873</color>
-    <color name="loader_background">#080B10</color>
-    <color name="loader_surface">#111720</color>
-    <color name="loader_surface_alt">#0E141C</color>
-    <color name="loader_surface_soft">#131A23</color>
-    <color name="loader_border">#26313D</color>
-    <color name="loader_border_soft">#253142</color>
-    <color name="loader_text_primary">#F1F4F8</color>
-    <color name="loader_text_secondary">#AAB5C2</color>
-    <color name="loader_text_muted">#718090</color>
-    <color name="loader_accent">#AAB5C2</color>
-    <color name="loader_scrim">#B3080B10</color>
-    <color name="loader_status_active">#31D17C</color>
-    <color name="loader_status_maintenance">#FFD37A</color>
+    <color name="background_color_dark">#F0F2F5</color>
+    <color name="textColor">#050505</color>
+    <color name="mtrl_textinput_default_box_stroke_color">#CED0D4</color>
+    <color name="loader_background">#F0F2F5</color>
+    <color name="loader_surface">#FFFFFF</color>
+    <color name="loader_surface_alt">#FFFFFF</color>
+    <color name="loader_surface_soft">#F7F8FA</color>
+    <color name="loader_border">#E4E6EB</color>
+    <color name="loader_border_soft">#E8EAED</color>
+    <color name="loader_text_primary">#050505</color>
+    <color name="loader_text_secondary">#65676B</color>
+    <color name="loader_text_muted">#8A8D91</color>
+    <color name="loader_accent">#0866FF</color>
+    <color name="loader_accent_soft">#E7F3FF</color>
+    <color name="loader_scrim">#88000000</color>
+    <color name="loader_status_active">#18794E</color>
+    <color name="loader_status_maintenance">#946200</color>
 </resources>
