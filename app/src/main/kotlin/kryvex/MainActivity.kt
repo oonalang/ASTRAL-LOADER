@@ -4,6 +4,8 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.view.MotionEvent
+import android.view.animation.OvershootInterpolator
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.net.Uri
@@ -36,6 +38,7 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.google.android.material.checkbox.MaterialCheckBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
@@ -70,6 +73,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var loaderPreferences: LoaderPreferences
     private lateinit var progressBar: ProgressBar
     private lateinit var loginSpinner: ProgressBar
+    private lateinit var rememberKeyToggle: MaterialCheckBox
+    private lateinit var rememberedKeyStore: RememberedKeyStore
+    private lateinit var downloadPercent: TextView
     private lateinit var downloadErrorView: TextView
     private var loginLoading = false
     private lateinit var radioGroup: RadioGroup
@@ -131,6 +137,7 @@ class MainActivity : AppCompatActivity() {
         val versionCode = getAppVersionCode()
         
         progressBar = findViewById(R.id.progressBar)
+        downloadPercent = findViewById(R.id.download_percent)
         
         librarySpinner = findViewById(R.id.my_spinner)
         delaySpinner = findViewById(R.id.delay_spinner)
@@ -157,6 +164,17 @@ class MainActivity : AppCompatActivity() {
         appBanner.setImageResource(R.drawable.kryvex_art)
         
         loaderPreferences = LoaderPreferences(this)
+        rememberedKeyStore = RememberedKeyStore(this)
+        rememberKeyToggle = findViewById(R.id.remember_key)
+        rememberKeyToggle.isChecked = rememberedKeyStore.isEnabled()
+        licenseKeyInput.setText(rememberedKeyStore.restore().orEmpty())
+        rememberKeyToggle.setOnCheckedChangeListener { _, checked ->
+            rememberedKeyStore.setEnabled(checked)
+        }
+        applyPressMotion(loginButton)
+        applyPressMotion(findViewById(R.id.browse_button))
+        applyPressMotion(findViewById(R.id.library_menu_button))
+        applyPressMotion(findViewById(R.id.quick_about))
 
         val savedMode = loaderPreferences.getMode()
         if (savedMode == "auto") {
@@ -268,7 +286,7 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun saveLicenseKeyForLibrary(libraryName: String, licenseKey: String) {
-        loaderPreferences.licenses.saveForLibrary(libraryName, licenseKey)
+        rememberedKeyStore.save(licenseKey)
     }
 
     private fun getLicenseKeyForLibrary(libraryName: String): String? {
@@ -300,11 +318,7 @@ class MainActivity : AppCompatActivity() {
             if (authenticatedGame.isNotBlank()) setLibraryDrawerOpen(true)
         }
         findViewById<View>(R.id.quick_about).setOnClickListener {
-            AlertDialog.Builder(this)
-                .setTitle("Need help?")
-                .setMessage("Choose your library and enter its license key. If your key is unavailable or rejected, contact your library provider.")
-                .setPositiveButton("OK", null)
-                .show()
+            HelpDialog(this).show()
         }
         findViewById<View>(R.id.drawer_close).setOnClickListener {
             setLibraryDrawerOpen(false)
@@ -325,7 +339,11 @@ class MainActivity : AppCompatActivity() {
             setLibraryDrawerOpen(false)
             AboutDialog(this).show()
         }
-
+        findViewById<View>(R.id.drawer_logout).setOnClickListener {
+            performLogout()
+        }
+        applyPressMotion(findViewById(R.id.drawer_about))
+        applyPressMotion(findViewById(R.id.drawer_logout))
         refreshLibraryDrawer()
     }
 
@@ -464,6 +482,7 @@ class MainActivity : AppCompatActivity() {
                     showToast("$name is under maintenance")
                 }
             }
+            applyPressMotion(row)
             libraryList.addView(row)
         }
     }
@@ -703,6 +722,7 @@ class MainActivity : AppCompatActivity() {
                 updateLibraryNavigation(true)
                 loginButton.text = "INJECT"
                 loginButton.isEnabled = true
+                animateLoginSuccess()
             }
         }
     }
@@ -710,7 +730,82 @@ class MainActivity : AppCompatActivity() {
     private fun updateLibraryNavigation(visible: Boolean) {
         val state = if (visible) View.VISIBLE else View.GONE
         findViewById<View>(R.id.library_menu_button).visibility = state
-        findViewById<View>(R.id.browse_button).visibility = state
+        val browse = findViewById<View>(R.id.browse_button)
+        browse.visibility = state
+        findViewById<View>(R.id.drawer_logout).visibility = state
+        if (visible) {
+            browse.alpha = 0f
+            browse.translationY = 14f * resources.displayMetrics.density
+            browse.animate().alpha(1f).translationY(0f).setDuration(250L).start()
+        }
+    }
+
+    private fun applyPressMotion(view: View) {
+        view.setOnTouchListener { target, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    target.animate().cancel()
+                    target.animate().scaleX(0.97f).scaleY(0.97f)
+                        .setDuration(105L).start()
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    target.animate().cancel()
+                    target.animate().scaleX(1f).scaleY(1f)
+                        .setDuration(180L).setInterpolator(OvershootInterpolator(1.05f)).start()
+                }
+            }
+            false
+        }
+    }
+
+    private fun animateLoginSuccess() {
+        loginButton.scaleX = 0.92f
+        loginButton.scaleY = 0.92f
+        loginButton.animate().scaleX(1f).scaleY(1f)
+            .setDuration(300L).setInterpolator(OvershootInterpolator(1.1f)).start()
+        appBanner.animate().scaleX(1.06f).scaleY(1.06f).setDuration(150L)
+            .withEndAction {
+                appBanner.animate().scaleX(1f).scaleY(1f)
+                    .setDuration(220L).setInterpolator(OvershootInterpolator(1f)).start()
+            }.start()
+    }
+
+    private fun performLogout() {
+        if (downloadingLibrary || loginLoading) return
+        setLibraryDrawerOpen(false)
+        endPresenceSession()
+        authenticatedGame = ""
+        authenticatedKey = ""
+        isReadyToInject = false
+        remoteLibrarySize = 0
+        allLibraries.clear()
+        filteredLibraries.clear()
+        selectedLibrary = SelectedLibrary()
+        File(cacheDir, LIBRARY_FILE_NAME).delete()
+        updateLibraryNavigation(false)
+        loginSpinner.visibility = View.GONE
+        downloadErrorView.visibility = View.GONE
+        findViewById<View>(R.id.download_progress_panel).visibility = View.GONE
+        findViewById<TextView>(R.id.library_name).text = "KRYVEX"
+        findViewById<View>(R.id.library_game).visibility = View.GONE
+        findViewById<View>(R.id.library_version).visibility = View.GONE
+        findViewById<View>(R.id.library_status).visibility = View.GONE
+        findViewById<View>(R.id.library_package).visibility = View.GONE
+        Glide.with(this).clear(appBanner)
+        appBanner.setImageResource(R.drawable.kryvex_art)
+        appBanner.isEnabled = true
+        licenseKeyInputLayout.visibility = View.VISIBLE
+        licenseKeyInputLayout.error = null
+        licenseKeyInput.isEnabled = true
+        licenseKeyInput.setText(rememberedKeyStore.restore().orEmpty())
+        loginButton.text = "LOGIN"
+        loginButton.isEnabled = true
+        librarySpinner.isEnabled = true
+        delaySpinner.isEnabled = true
+        methodSpinner.isEnabled = true
+        radioGroup.isEnabled = true
+        onlineUsers.text = "● 0 users online"
+        loadLibraryCatalog()
     }
 
     private fun startLoginLoading() {
@@ -732,7 +827,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showDownloadFailure(reason: String) {
         stopLoginLoading()
-        progressBar.visibility = View.GONE
+        findViewById<View>(R.id.download_progress_panel).visibility = View.GONE
         downloadErrorView.text = reason
         downloadErrorView.visibility = View.VISIBLE
         loginButton.text = "INJECT"
@@ -761,6 +856,7 @@ class MainActivity : AppCompatActivity() {
         loadLibraryCatalog()
         stopLoginLoading()
         downloadErrorView.visibility = View.GONE
+        findViewById<View>(R.id.download_progress_panel).visibility = View.GONE
         licenseKeyInputLayout.error = message
         licenseKeyInputLayout.visibility = View.VISIBLE
         appBanner.isEnabled = true
@@ -901,14 +997,19 @@ class MainActivity : AppCompatActivity() {
         val outputFile = File(context.cacheDir, libraryFileName)
         lifecycleScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) {
-                progressBar.visibility = View.VISIBLE
+                findViewById<View>(R.id.download_progress_panel).visibility = View.VISIBLE
                 progressBar.progress = 0
+                downloadPercent.text = "0%"
             }
 
             val result = libraryDownloader.downloadWithStatus(
                 url = url,
                 destinationName = libraryFileName,
-                onProgress = { progress -> progressBar.progress = progress },
+                onProgress = { progress ->
+                    val percent = progress.coerceIn(0, 100)
+                    progressBar.setProgress(percent, true)
+                    downloadPercent.text = "$percent%"
+                },
                 sessionToken = activePresenceToken.orEmpty()
             )
             val valid = result.success && outputFile.isFile && outputFile.length() >= 64L
@@ -920,7 +1021,11 @@ class MainActivity : AppCompatActivity() {
             }
 
             withContext(Dispatchers.Main) {
-                progressBar.visibility = View.GONE
+                if (valid) {
+                    progressBar.setProgress(100, true)
+                    downloadPercent.text = "100%"
+                }
+                findViewById<View>(R.id.download_progress_panel).visibility = View.GONE
                 callback(valid, if (valid) "" else result.reason.ifBlank { "Library file failed validation" })
             }
         }
