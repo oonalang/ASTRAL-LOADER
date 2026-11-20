@@ -1,11 +1,6 @@
 package kryvex.loader
 
 import android.content.Intent
-import android.animation.ValueAnimator
-import android.view.View
-import android.view.animation.DecelerateInterpolator
-import android.widget.ImageView
-import android.widget.TextView
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -26,13 +21,14 @@ class SplashActivity : AppCompatActivity() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
     }
 
-    private val handler = Handler(Looper.getMainLooper())
-    private var progressAnimator: ValueAnimator? = null
+    private lateinit var handler: Handler
     private lateinit var progressBar: ProgressBar
     private lateinit var notificationPermissionRequester: NotificationPermissionRequester
     private lateinit var permissionLauncher: ActivityResultLauncher<String>
 
-    private val totalDuration = 1850L
+    private var progressStatus = 0
+    private val totalDuration = 5000L
+    private val updateInterval = 50L
 
     companion object {
         var detectedVpn: String? = null
@@ -83,17 +79,6 @@ class SplashActivity : AppCompatActivity() {
 
         progressBar = findViewById(R.id.progressBarSplash)
         progressBar.progress = 0
-        val splashLogo = findViewById<ImageView>(R.id.splash_logo)
-        val splashTitle = findViewById<TextView>(R.id.splash_title)
-        splashLogo.alpha = 0f
-        splashLogo.scaleX = 0.90f
-        splashLogo.scaleY = 0.90f
-        splashTitle.alpha = 0f
-        splashTitle.translationY = 16f * resources.displayMetrics.density
-        splashLogo.animate().alpha(1f).scaleX(1f).scaleY(1f)
-            .setDuration(420L).setInterpolator(DecelerateInterpolator()).start()
-        splashTitle.animate().alpha(1f).translationY(0f)
-            .setStartDelay(100L).setDuration(420L).start()
 
         permissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -106,9 +91,9 @@ class SplashActivity : AppCompatActivity() {
         notificationPermissionRequester = NotificationPermissionRequester(this, permissionLauncher)
         notificationPermissionRequester.request()
 
-        animateLoading()
+        startFakeLoading()
 
-        handler.postDelayed({
+        Handler(Looper.getMainLooper()).postDelayed({
 
             detectedVpn = getDetectedVPN()
 
@@ -136,23 +121,22 @@ class SplashActivity : AppCompatActivity() {
         }, totalDuration)
     }
 
-    private fun animateLoading() {
-        val status = findViewById<TextView>(R.id.splash_status)
-        progressAnimator = ValueAnimator.ofInt(0, 100).apply {
-            duration = totalDuration
-            interpolator = DecelerateInterpolator()
-            addUpdateListener { value ->
-                val progress = value.animatedValue as Int
-                progressBar.progress = progress
-                status.text = if (progress < 85) "Preparing workspace" else "Opening KRYVEX"
+    private fun startFakeLoading() {
+        handler = Handler(Looper.getMainLooper())
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                progressStatus += if (progressStatus < 30) 2 else 1
+                if (progressStatus > 100) progressStatus = 100
+                progressBar.progress = progressStatus
+                if (progressStatus < 100) {
+                    handler.postDelayed(this, updateInterval)
+                }
             }
-            start()
-        }
+        }, 500)
     }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
-        progressAnimator?.cancel()
         super.onDestroy()
     }
 }
