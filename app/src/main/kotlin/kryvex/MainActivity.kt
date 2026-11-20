@@ -709,6 +709,7 @@ class MainActivity : AppCompatActivity() {
                 startHeartbeatPolling()
                 startOnlineCountPolling()
                 licenseKeyInputLayout.visibility = View.GONE
+                rememberKeyToggle.visibility = View.GONE
                 licenseKeyInputLayout.error = null
                 appBanner.isEnabled = false
                 licenseKeyInput.isEnabled = true
@@ -795,6 +796,7 @@ class MainActivity : AppCompatActivity() {
         appBanner.setImageResource(R.drawable.kryvex_art)
         appBanner.isEnabled = true
         licenseKeyInputLayout.visibility = View.VISIBLE
+        rememberKeyToggle.visibility = View.VISIBLE
         licenseKeyInputLayout.error = null
         licenseKeyInput.isEnabled = true
         licenseKeyInput.setText(rememberedKeyStore.restore().orEmpty())
@@ -858,6 +860,7 @@ class MainActivity : AppCompatActivity() {
         downloadErrorView.visibility = View.GONE
         findViewById<View>(R.id.download_progress_panel).visibility = View.GONE
         licenseKeyInputLayout.error = message
+        rememberKeyToggle.visibility = View.VISIBLE
         licenseKeyInputLayout.visibility = View.VISIBLE
         appBanner.isEnabled = true
         loginButton.text = "LOGIN"
