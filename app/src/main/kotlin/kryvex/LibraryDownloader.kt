@@ -72,8 +72,12 @@ class LibraryDownloader(private val context: Context) {
     fun downloadWithStatus(
         url: String,
         destinationName: String,
-        onProgress: (Int) -> Unit = {}
+        onProgress: (Int) -> Unit = {},
+        sessionToken: String = ""
     ): LibraryDownloadOutcome {
+        if (!sessionToken.matches(Regex("[a-fA-F0-9]{64}"))) {
+            return LibraryDownloadOutcome(false, "License session unavailable. Log in again")
+        }
         val destination = File(context.cacheDir, destinationName)
         val temporary = File(context.cacheDir, "$destinationName.part")
         val request = runCatching {
@@ -81,6 +85,7 @@ class LibraryDownloader(private val context: Context) {
                 .url(url)
                 .header("Accept", "application/octet-stream, */*")
                 .header("Cache-Control", "no-cache")
+                .header("X-Kryvex-Session", sessionToken)
                 .build()
         }.getOrElse { return LibraryDownloadOutcome(false, "Invalid library download address") }
 
@@ -93,7 +98,8 @@ class LibraryDownloader(private val context: Context) {
                     client.newCall(request).execute().use { response ->
                         if (!response.isSuccessful) {
                             val reason = when (response.code) {
-                                401, 403 -> "Library access denied (HTTP ${response.code})"
+                                401 -> "Library session expired or unauthorized. Log in again"
+                                403 -> "Library not assigned to this license"
                                 404 -> "Library file not found (HTTP 404)"
                                 else -> "Library server error (HTTP ${response.code})"
                             }
