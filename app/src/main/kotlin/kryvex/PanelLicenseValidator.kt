@@ -1,6 +1,7 @@
 package kryvex.loader
 
 import android.content.ContentResolver
+import android.os.Build
 import android.provider.Settings
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -26,7 +27,13 @@ class PanelLicenseValidator(private val contentResolver: ContentResolver) {
         return try {
             val serial = (Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "android")
                 .replace(Regex("[^A-Za-z0-9_-]"), "_")
-            val form = listOf("game" to game, "user_key" to licenseKey, "serial" to serial)
+            val deviceName = listOf(Build.MANUFACTURER, Build.MODEL)
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .joinToString(" ")
+                .take(70)
+            val form = listOf("game" to game, "user_key" to licenseKey, "serial" to serial, "device_name" to deviceName)
                 .joinToString("&") { (name, value) ->
                     "${URLEncoder.encode(name, "UTF-8")}=${URLEncoder.encode(value, "UTF-8")}"
                 }
